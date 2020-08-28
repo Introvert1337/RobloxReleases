@@ -1,10 +1,20 @@
+setreadonly(utf8, false)
+
+function utf8.sub(s, i, j)
+    i = utf8.offset(s, i)
+    j = utf8.offset(s, j + 1) - 1
+    return string.sub(s, i, j)
+end
+
+setreadonly(utf8, true)
+
 local Characters = {
-    a = "✨😊❤️",
+    a = "✨😊🍍",
     A = "😎😂🔥",
-    b = "😥😎❤️",
+    b = "😥😎💯",
     B = "😍🍉🍍",
-    c = "❤️🥭😊",
-    C = "🐶🥭󠁠󠁠💯",
+    c = "🔔🎑🤬",
+    C = "🐶🐴💯",
     d = "🍍💯🥑",
     D = "😎🥰🧱",
     e = "🥺💈💣",
@@ -12,23 +22,23 @@ local Characters = {
     f = "🛀📘💼",
     F = "🐛🌛👲",
     g = "🍶👾🐴",
-    G = "🔃⛪️⏳",
+    G = "🔃🍎⏳",
     h = "✋🎑🐵",
     H = "🔔😍🍜",
     i = "🌎❓🐺",
     I = "💲🚞😽",
     j = "👵🌊🍎",
     J = "🚆👹💴",
-    k = "1️⃣🚋👱",
+    k = "🐺🚋👱",
     K = "🌕🔀💯",
     l = "🤖📶📠",
     L = "🆘👴🐔",
     m = "🕔🚃🦁",
-    M = "🌞1️⃣🏫",
+    M = "🌞💡🏫",
     n = "🕌🍶😈",
     N = "💖🍌🍐",
     o = "🔜🕠💖",
-    O = "✖️🍮📆",
+    O = "🎼🍮📆",
     p = "🍖🎿💡",
     P = "🔢🐘🍮",
     q = "🚎🐃💇",
@@ -37,7 +47,7 @@ local Characters = {
     R = "🖐🐞💑",
     s = "🚆🍊🕚",
     S = "💂🌍👩",
-    t = "🚙☔️🌝",
+    t = "🌍🍖🔫",
     T = "⏳📎🔫",
     u = "🎑👨💛", 
     U = "💄🚉🍧",
@@ -48,49 +58,49 @@ local Characters = {
     x = "😩🚩🛄",
     X = "💠🍩📑",
     y = "🔂🦁💴",
-    Y = "♉️😕🍰",
+    Y = "🌖😕🍰",
     z = "🚊🕡💍",
     Z = "❌🍗🍋",
-    ["1"] = "💑✴️📏",
+    ["1"] = "💑🌖📏",
     ["2"] = "📏🍕🕍",
-    ["3"] = "⛺️👣⏪",
+    ["3"] = "🍡👣⏪",
     ["4"] = "🏅🙃🌖",
     ["5"] = "😗🍡🚴",
     ["6"] = "🏉🙌📗",
-    ["7"] = "🍪⚠️🕟",
-    ["8"] = "🏀7️⃣💬",
-    ["9"] = "🍺🐮☕️",
+    ["7"] = "🍪🈲🕟",
+    ["8"] = "🏀🌂💬",
+    ["9"] = "🍺🐮🚹",
     ["0"] = "🎸😣🎳",
     grave = "🐹👾⛹",
-    ["/"] = "😗🚂1️⃣",
+    ["/"] = "😗🚂🌖",
     backslash = "❌🤖🍞", 
-    ["["] = "🍈↩️😵", 
+    ["["] = "🍈⛹😵", 
     ["]"] = "💜💹🈲", 
     ["("] = "🚎👆✋",
     [")"] = "😴😍😵",
     ["+"] = "🆔📷👏",
-    ["-"] = "✒️🐵🔮",
+    ["-"] = "🐘🌂🔮",
     ["="] = "🚹➗🏩",
     ["{"] = "🐧👎🤖",
-    ["}"] = "🐍🍮♌️",
+    ["}"] = "🐍🍮🔮",
     [";"] = "🍛🕰📚",
     [":"] = "🍵🕎💀",
     [">"] = "🏣📝🎢",
     ["<"] = "😧📗🌵",
     ["'"] = "😨🍗😻",
-    ['"'] = "🚋♓️📭",
+    ['"'] = "🌈💀📭",
     ["|"] = "🐱🚿🎷",
-    ["_"] = "🚍🍵🌈",
-    ["*"] = "✈️😔🔫",
-    ["!"] = "⚠️💌💖",
+    ["_"] = "🔮😴🌈",
+    ["*"] = "😕😔🔫",
+    ["!"] = "🏇🍵🐘",
     ["@"] = "🍉🐋🌂",
     ["#"] = "🍗🉑😁", 
     ["$"] = "😲🍁🙈", 
     ["%"] = "🏇🚛👢",
     ["^"] = "🚣😏🍰",
     ["&"] = "🎠🐘🙅",
-    ["."] = "📚🐉㊙️",
-    [","] = "⛄️🔆‼️",
+    ["."] = "📚🐉😴",
+    [","] = "🎠🔆😏",
     ["~"] = "😭🚈🍆",
     [" "] = " ",
 }
@@ -100,30 +110,36 @@ local EmojiSecureV2 = {
         local Output = ""
         for i,v in next, data:split("") do 
             if Characters[v] then 
-                Output = Output.."✅"..Characters[v] 
+                Output = Output..Characters[v] 
             elseif v == [[\]] then 
-                Output = Output.."✅"..Characters["backslash"]
+                Output = Output..Characters["backslash"]
             elseif v == [[`]] then 
-                Output = Output.."✅"..Characters["grave"]
+                Output = Output..Characters["grave"]
             end
         end
         return Output
     end,
     Decode = function(data)
         local Output = ""
-        for i,v in next, data:split("✅") do 
-            for k,x in next, Characters do 
-                if x == v then 
-                    if k ~= "backslash" and k ~= "grave" then
-                        Output = Output..k 
-                    else 
-                        if k == "backslash" then 
-                            Output = Output..[[\]] 
-                        elseif k == "grave" then 
-                            Output = Output..[[`]] 
-                        end 
+        local last = 1
+        for i = 3, utf8.len(data) do
+            if i/3 == math.floor(i/3) then 
+                local subbed = utf8.sub(data, i == 3 and last or last + 1, i)
+                for k,x in next, Characters do 
+                    if x == subbed then 
+                        if k ~= "backslash" and k ~= "grave" then
+                            Output = Output..k
+                            break
+                        else 
+                            if k == "backslash" then 
+                                Output = Output..[[\]] 
+                            elseif k == "grave" then 
+                                Output = Output..[[`]] 
+                            end
+                        end
                     end
                 end
+                last = i
             end
         end
         return Output
