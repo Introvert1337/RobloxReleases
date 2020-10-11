@@ -11,6 +11,9 @@ end
 
 local function Grab(c)
     local FireServer = table.find(c, "FireServer")
+    if #c == 3 then 
+        return c[FireServer - 2]..c[FireServer - 1]
+    end
     local start, finish = nil, #c[FireServer - 1] <= 3 and c[FireServer - 1] or c[FireServer - 2]
     for k,x in next, c do 
         if typeof(x) == "string" and #x == 1 then 
