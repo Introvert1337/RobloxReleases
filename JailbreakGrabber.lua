@@ -11,10 +11,12 @@ end
 
 local function Grab(c)
     local FireServer = table.find(c, "FireServer")
-    if #c == 3 then 
-        return c[FireServer - 2]..c[FireServer - 1]
+    local a = c[FireServer - 1]
+    local b = c[FireServer - 2]
+    if #c == 3 and #b == 1 then 
+        return b..a
     end
-    local start, finish = nil, #c[FireServer - 1] <= 3 and c[FireServer - 1] or c[FireServer - 2]
+    local start, finish = nil, #a <= 3 and a or b
     for k,x in next, c do 
         if typeof(x) == "string" and #x == 1 then 
             start = x 
