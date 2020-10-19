@@ -20,6 +20,7 @@ local function Grab(c)
     for k,x in next, c do 
         if typeof(x) == "string" and #x == 1 then 
             start = x 
+            break
         end
     end
     for k,x in next, AllHashes do 
@@ -32,8 +33,8 @@ end
 for i,v in next, getgc() do 
     if getfenv(v).script == Game.TeamChooseUI then 
         local c = debug.getconstants(v)
-        if table.find(c, "Police") and table.find(c, "Prisoner") then 
-            getgenv().Hashes.ChangeTeam = Grab(c)
+        if table.find(c, "MouseButton1Down") and table.find(c, "Police") then 
+            getgenv().Hashes.ChangeTeam = Grab(c, "team")
         end
     elseif getfenv(v).script == Game.Item.Taser then 
         local c = debug.getconstants(v)
