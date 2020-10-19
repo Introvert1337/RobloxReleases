@@ -31,25 +31,14 @@ local function Grab(c)
 end
 
 for i,v in next, getgc() do 
-    if getfenv(v).script == Game.TeamChooseUI then 
-        local c = debug.getconstants(v)
-        if table.find(c, "MouseButton1Down") and table.find(c, "Police") then 
-            getgenv().Hashes.ChangeTeam = Grab(c, "team")
-        end
-    elseif getfenv(v).script == Game.Item.Taser then 
-        local c = debug.getconstants(v)
-        if table.find(c, "tick") and table.find(c, "GetPlayerFromCharacter") then 
-            getgenv().Hashes.Taze = Grab(c)
-        end
-    elseif getfenv(v).script == game:GetService("Players").LocalPlayer.PlayerScripts.LocalScript then 
+    if getfenv(v).script == game:GetService("Players").LocalPlayer.PlayerScripts.LocalScript then 
         local c = debug.getconstants(v)
         if table.find(c, "Eject") and table.find(c, "Passenger") then 
             getgenv().Hashes.Eject = Grab(debug.getconstants(debug.getproto(v, 1)))
         end
-    elseif getfenv(v).script == Game.Item.Donut then
-        local c = debug.getconstants(v)
-        if table.find(c, "delay") and table.find(c, "Eat") then 
-            getgenv().Hashes.EatDonut = Grab(debug.getconstants(debug.getproto(v, 1)))
-        end
     end
 end
+
+getgenv().Hashes.ChangeTeam = Grab(debug.getconstants(require(Game.TeamChooseUI).Show))
+getgenv().Hashes.EatDonut = Grab(debug.getconstants(debug.getproto(require(Game.Item.Donut).InputBegan, 1)))
+getgenv().Hashes.Taze = Grab(debug.getconstants(require(Game.Item.Taser).Tase))
