@@ -1,13 +1,8 @@
 local Game = game:GetService("ReplicatedStorage").Game 
 local AllHashes
+local EjectConst
 
 getgenv().Hashes = {}
-
-for i,v in next, getgc(true) do
-    if type(v) == "table" and rawget(v, "FireServer") then
-        AllHashes = debug.getupvalue(debug.getupvalue(v.FireServer, 1), 3)
-    end
-end 
 
 local function Grab(c)
     local FireServer = table.find(c, "FireServer")
@@ -30,15 +25,22 @@ local function Grab(c)
     end
 end
 
-for i,v in next, getgc() do 
-    if getfenv(v).script == game:GetService("Players").LocalPlayer.PlayerScripts.LocalScript then 
-        local c = debug.getconstants(v)
-        if table.find(c, "Eject") and table.find(c, "Passenger") then 
-            getgenv().Hashes.Eject = Grab(debug.getconstants(debug.getproto(v, 1)))
+for i,v in next, getgc() do
+    if type(v) == "function" then 
+        local n = debug.getinfo(v).name
+        if n == "FireServer" then 
+            AllHashes = debug.getupvalue(debug.getupvalue(v, 1), 3)
+        end
+        if n == "c" then 
+            local c = debug.getconstants(v)
+            if table.find(c, "Eject") and table.find(c, "Passenger") then
+                EjectConst = debug.getconstants(debug.getproto(v, 1))
+            end
         end
     end
-end
+end 
 
+getgenv().Hashes.Eject = Grab(EjectConst)
 getgenv().Hashes.ChangeTeam = Grab(debug.getconstants(require(Game.TeamChooseUI).Show))
 getgenv().Hashes.EatDonut = Grab(debug.getconstants(debug.getproto(require(Game.Item.Donut).InputBegan, 1)))
 getgenv().Hashes.Taze = Grab(debug.getconstants(require(Game.Item.Taser).Tase))
