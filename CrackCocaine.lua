@@ -4,13 +4,6 @@ local HookHttp = true
 
 local urls = {}
 
-local function GetHttpResponse(url)
-    return req({
-        Url = url;
-        Method = "GET";
-    })
-end
-
 httphook = hookfunction(game.HttpGet, function(self, url, ...)
     if HookHttp then
         table.insert(urls, {Url = url, Resp = nil, Type = "http"})
