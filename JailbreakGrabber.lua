@@ -49,12 +49,7 @@ for i,v in next, getgc() do
     elseif getfenv(v).script == Game.Item.Donut then
         local c = debug.getconstants(v)
         if table.find(c, "delay") and table.find(c, "Eat") then 
-            for k,x in next, debug.getprotos(v) do 
-                local c = debug.getconstants(x)
-                if table.find(c, "LastConsumed") and table.find(c, "FireServer") then 
-                    getgenv().Hashes.EatDonut = Grab(c)
-                end
-            end
+            getgenv().Hashes.EatDonut = Grab(debug.getconstants(debug.getproto(v, 1)))
         end
     end
 end
