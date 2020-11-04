@@ -1,4 +1,4 @@
-local TS = require(game:GetService("ReplicatedStorage").Tortoiseshell)
+local TS = require(game:GetService("ReplicatedStorage").TS)
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local Mouse = player:GetMouse()
