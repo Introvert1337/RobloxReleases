@@ -1,4 +1,4 @@
-local Raycast = require(game:GetService("ReplicatedStorage").Tortoiseshell).Raycast
+local Raycast = require(game:GetService("ReplicatedStorage").TS).Raycast
 
 if shared.WallbangEnabled == true then
     debug.setupvalue(Raycast.CastGeometryAndEnemies, 1, nil)
