@@ -50,15 +50,9 @@ local function Build(pos)
         if ObjectToBuild == "Floor" then 
             Position = Position + Vector3.new(0, 9, 0)
         end
-    
-        local BuildNewCFrame = Position
-
-        if Type == "Pyramid" then
-            BuildNewCFrame = BuildNewCFrame + Vector3.new(0, -4.5, 0)
-        end
         
         local AnglesY = GlobalStuff:Round(Angles[i], pi / 2)
-        local ObjectCFrame = CFrame.new(BuildNewCFrame) * CFrame.Angles(0, AnglesY, 0) * CFrame.Angles(0, 0, 0)
+        local ObjectCFrame = CFrame.new(Position) * CFrame.Angles(0, AnglesY, 0) * CFrame.Angles(0, 0, 0)
 
         --// Call Strucid's Functions / Remotes To Build 
 
