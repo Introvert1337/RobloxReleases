@@ -8,7 +8,6 @@ setupvalue = setupvalue or debug.setupvalue
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SelfKeybind = Enum.KeyCode[shared.build_cube_around_yourself_keybind:upper()]
 local ClosestKeybind = Enum.KeyCode[shared.build_cube_around_closest_enemy_keybind:upper()]
-local BuildAssets = ReplicatedStorage.BuildAssets
 local GlobalStuff = require(ReplicatedStorage.GlobalStuff)
 local NetworkModule = require(ReplicatedStorage.NetworkModule)
 local BuildModule = require(ReplicatedStorage.BuildModule)
