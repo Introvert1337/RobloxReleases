@@ -1,3 +1,6 @@
+shared.build_cube_around_yourself_keybind = "K"
+shared.build_cube_around_closest_enemy_keybind = "Z"
+
 --// ENV
 
 getupvalue = getupvalue or debug.getupvalue 
@@ -14,8 +17,13 @@ local BuildModule = require(ReplicatedStorage.BuildModule)
 local player = game:GetService("Players").LocalPlayer
 local pi = math.pi
 local floor = math.floor
+
 local Angles = { --// Angle of each wall / floor
     -pi / 2, pi, pi / 2, -pi, pi / 2
+}
+
+local Offsets = { --// Position offset of each wall / floor
+    Vector3.new(9, 0, 0), Vector3.new(0, 0, 9), Vector3.new(-9, 0, 0), Vector3.new(0, 0, -9), Vector3.new(0, 9, 0) 
 }
 
 --// Function to find the nearest valid grid point
@@ -26,45 +34,33 @@ end
 
 --// Function to build the cube
 
-local function Build(pos)
-    local ObjectToBuild = "Wall" --// The object type
-    local Position
-
+local function Build(delta)
     for i = 1, 5 do --// Modify the position offset each time to have it make a cube
-        if i == 1 then
-            Position = pos + Vector3.new(9, 0, 0)
-        elseif i == 2 then
-            Position = pos + Vector3.new(0, 0, 9)
-        elseif i == 3 then 
-            Position = pos - Vector3.new(9, 0, 0)
-        elseif i == 4 then
-            Position = pos - Vector3.new(0, 0, 9)
-        elseif i == 5 then 
-            ObjectToBuild = "Floor"
-            Position = pos + Vector3.new(0, 9, 0)
-        end
+        spawn(function()
+            local Offset = Offsets[i]
+            local Position = GetClosest(delta + Offset)
+            local AnglesY = GlobalStuff:Round(Angles[i], pi / 2)
+            local ObjectName = "Wall"
 
-        Position = GetClosest(Position)
+            if i == 5 then 
+                ObjectName = "Floor"
+                Position = Position + Offset 
+            end
 
-        if ObjectToBuild == "Floor" then 
-            Position = Position + Vector3.new(0, 9, 0)
-        end
+            --// Call Strucid's Functions / Remotes To Build 
+
+            BuildModule:UpdateGridData(Position.X, Position.Y, Position.Z, ObjectName, AnglesY, player.Name)
+
+            local Response = NetworkModule:InvokeServer("Build", Position.X, Position.Y, Position.Z, ObjectName, AnglesY)
         
-        local AnglesY = GlobalStuff:Round(Angles[i], pi / 2)
-
-        --// Call Strucid's Functions / Remotes To Build 
-
-        BuildModule:UpdateGridData(Position.X, Position.Y, Position.Z, ObjectToBuild, AnglesY, player.Name)
-
-        local Response = NetworkModule:InvokeServer("Build", Position.X, Position.Y, Position.Z, ObjectToBuild, AnglesY)
-    
-        if Response == true then
-            local UpdateResourceCount = getsenv(player.PlayerGui.MainGui.MainLocal).UpdateResourceCount
-            setupvalue(UpdateResourceCount, 2, getupvalue(UpdateResourceCount, 2) - 10)
-            UpdateResourceCount()
-        elseif Response == false then
-            BuildModule:UpdateGridData(Position.X, Position.Y, Position.Z, nil);
-        end 
+            if Response == true then
+                local UpdateResourceCount = getsenv(player.PlayerGui.MainGui.MainLocal).UpdateResourceCount
+                setupvalue(UpdateResourceCount, 2, getupvalue(UpdateResourceCount, 2) - 10)
+                UpdateResourceCount()
+            elseif Response == false then
+                BuildModule:UpdateGridData(Position.X, Position.Y, Position.Z, nil);
+            end 
+        end)
     end
 end
 
