@@ -52,7 +52,6 @@ local function Build(pos)
         end
         
         local AnglesY = GlobalStuff:Round(Angles[i], pi / 2)
-        local ObjectCFrame = CFrame.new(Position) * CFrame.Angles(0, AnglesY, 0) * CFrame.Angles(0, 0, 0)
 
         --// Call Strucid's Functions / Remotes To Build 
 
