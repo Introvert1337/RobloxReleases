@@ -1,6 +1,3 @@
-shared.build_cube_around_yourself_keybind = "K"
-shared.build_cube_around_closest_enemy_keybind = "Z"
-
 --// ENV
 
 getupvalue = getupvalue or debug.getupvalue 
