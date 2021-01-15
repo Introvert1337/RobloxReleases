@@ -26,6 +26,9 @@ local function AddUnlockConnection(element, signal)
 				Right:WaitForChild("LvlUnlock").Visible = false 
 				Right:WaitForChild("Unlocked").Visible = true
 				Right:WaitForChild("UnlockFrame").Visible = false
+				local Selected = Weapons[tonumber(Child.Name)]
+				Selected[1] = element.Name 
+				Selected[2] = require(WeaponModulesFolder:FindFirstChild(element.Name)).ClipAmmo
 			end
 		end
 	end)
