@@ -1,3 +1,7 @@
+--// ENV 
+
+checkcaller = checkcaller or is_protosmasher_caller
+
 --// Define variables
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
