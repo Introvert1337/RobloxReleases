@@ -11,6 +11,8 @@ RoBeats:
     [+] Collect NPC Rewards 
     [+] Note Colors
     
+--------------------------------------------------------------------------
+    
 Bad Business:
 
 [*] Combat
@@ -43,6 +45,8 @@ Bad Business:
 [*] Melee 
     [+] Knife Aura
     [+] Double Melee Damage
+    
+--------------------------------------------------------------------------
     
 Phantom Forces:
 
@@ -82,6 +86,8 @@ Phantom Forces:
     [+] Auto Deploy
     [+] Killsay
     
+--------------------------------------------------------------------------
+    
 Strucid:
 
 [*] Combat
@@ -111,6 +117,8 @@ Strucid:
   [+] Enabled
   [+] Build cube around self keybind
   [+] Build cube around nearest enemy keybind
+ 
+--------------------------------------------------------------------------
   
 Ragdoll Engine:
 
@@ -126,6 +134,8 @@ Ragdoll Engine:
    [+] Walkspeed 
    [+] Jump height 
    [+] Bomb All
+   
+--------------------------------------------------------------------------
 
 [*] Sound Space
  [*] Autoplayer 
@@ -139,6 +149,8 @@ Ragdoll Engine:
     [+] Camera Lock
     [+] Song Speed 
     
+--------------------------------------------------------------------------
+    
 RoBeats CS:
 
 [*] Autoplayer
@@ -149,7 +161,9 @@ RoBeats CS:
         [+] Great
         [+] Okay
         [+] Bad
-        [+] Miss  
+        [+] Miss
+        
+ --------------------------------------------------------------------------
         
 Welcome to Bloxburg:
 
@@ -208,6 +222,8 @@ Welcome to Bloxburg:
       [+] Time 
       [+] Weather
       
+--------------------------------------------------------------------------
+      
 Adopt Me:
 
 [*] Character 
@@ -230,6 +246,8 @@ Adopt Me:
 [*] Misc 
     [+] Complete All Obbies 
     [+] Auto Collect Paycheck
+    
+--------------------------------------------------------------------------
     
 Prison Life:
 
@@ -265,6 +283,8 @@ Prison Life:
     [+] Kill all 
     [+] Annoy players
     
+--------------------------------------------------------------------------
+    
 Sound Space:
 
 [*] Autoplay
@@ -276,6 +296,8 @@ Sound Space:
     [+] Rainbow Cursor 
     [+] Cursor Trail 
     [+] Camera Lock
+    
+--------------------------------------------------------------------------
     
 Dungeon Quest:
 
@@ -294,6 +316,8 @@ Dungeon Quest:
     [+] Disable Borders 
     [+] Auto Use Abilities 
     [+] Auto Swing
+    
+--------------------------------------------------------------------------
     
 Arsenal:
 
@@ -328,6 +352,8 @@ Arsenal:
     [+] No Recoil
     [+] No Spread
     
+--------------------------------------------------------------------------
+    
 Tower of Hell:
 
 [*] Character 
@@ -341,6 +367,8 @@ Tower of Hell:
 [*] Autofarm 
     [+] Auto Finish 
     [+] Loop Auto Finish
+    
+--------------------------------------------------------------------------
     
 Murder Mystery 2:
 
@@ -356,6 +384,8 @@ Murder Mystery 2:
     [+] Murderer ESP 
     [+] Sheriff ESP 
     [+] Innocent ESP
+    
+--------------------------------------------------------------------------
     
 Rogue Lineage (idk how to play it so there's not many features and it won't be updated much):
 
@@ -392,6 +422,8 @@ Rogue Lineage (idk how to play it so there's not many features and it won't be u
 [*] Misc
     [+] Auto Pickup
     [+] Chat Logger
+    
+--------------------------------------------------------------------------
     
 Universal:
 
