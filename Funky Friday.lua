@@ -121,16 +121,16 @@ end
 
 --// Init GC loop
 
-for i, v in next, getgc(true) do
-    if type(v) == "table" and rawget(v, "GameUI") then
-        Variables.Framework = v
-    elseif type(v) == "function" and islclosure(v) and tostring(getfenv(v).script) == "Arrows" then
-		local Constants = getconstants(v)
+for Index, Value in next, getgc(true) do
+    if type(Value) == "table" and rawget(Value, "GameUI") then
+        Variables.Framework = Value
+    elseif type(Value) == "function" and islclosure(Value) and tostring(getfenv(Value).script) == "Arrows" then
+		local Constants = getconstants(Value)
 		 
 		if table.find(Constants, "CurrentScore") and table.find(Constants, "Data") then 
-			Variables.KeyFunctions.KeyUp = v 
+			Variables.KeyFunctions.KeyUp = Value 
 		elseif table.find(Constants, "NewThread") and table.find(Constants, "Section") then
-			Variables.KeyFunctions.KeyDown = v 
+			Variables.KeyFunctions.KeyDown = Value 
 		end 
     end
 end
