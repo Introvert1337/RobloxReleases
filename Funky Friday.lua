@@ -1,3 +1,15 @@
+--// ENV
+
+islclosure = islclosure or is_l_closure
+getgc = getgc or get_gc_objects
+getconstants = getconstants or debug.getconstants
+
+if not islclosure or not getgc or not getconstants then 
+    return game:GetService("Players").LocalPlayer:Kick("Exploit Not Supported")
+end
+
+--// Variables
+
 local Autoplayer = {}
 local Variables = {}
 
@@ -28,6 +40,8 @@ do
         "Bad"
     }
 end
+
+--// Functions
 
 do 
     function Autoplayer:GetDirection(Position)
@@ -105,11 +119,13 @@ do
     end
 end
 
+--// Init GC loop
+
 for i, v in next, getgc(true) do
     if type(v) == "table" and rawget(v, "GameUI") then
         Variables.Framework = v
     elseif type(v) == "function" and islclosure(v) and tostring(getfenv(v).script) == "Arrows" then
-		local Constants = debug.getconstants(v)
+		local Constants = getconstants(v)
 		 
 		if table.find(Constants, "CurrentScore") and table.find(Constants, "Data") then 
 			Variables.KeyFunctions.KeyUp = v 
@@ -118,6 +134,8 @@ for i, v in next, getgc(true) do
 		end 
     end
 end
+
+--// Main autoplayer loop
 
 game:GetService("RunService").Heartbeat:Connect(function()
     if shared.Settings.Autoplay then
