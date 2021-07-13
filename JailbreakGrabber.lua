@@ -8,7 +8,8 @@ local Players = game:GetService("Players")
 
 --// Function Identification and Fixes
 
-local ConstantMapping = {
+local ConstantMapping
+ConstantMapping = {
     CarKick = {
         Constants = {"Eject", "MouseButton1Down"},
         UpvalueIndex = 1,
@@ -23,6 +24,11 @@ local ConstantMapping = {
     Eject = {
         Constants = {"ShouldEject", "Vehicle"},
         UpvalueIndex = 2,
+    },
+
+    Hijack = {
+        Constants = {"ShouldEject", "Vehicle"},
+        UpvalueIndex = 1,
     },
 
     SwitchTeam = {
@@ -105,6 +111,53 @@ local ConstantMapping = {
         Constants = {"ShouldArrest", "ShouldPickpocket"},
         UpvalueIndex = 1,
         CustomArguments = {{Name = ""}}
+    },
+
+    Damage = {
+        Constants = {"NoFallDamage", "NoRagdoll"},
+        CustomArguments = {0},
+        CustomFix = function(Function)
+            ConstantMapping.Damage.OldUpvalues = debug.getupvalues(Function)
+
+            debug.setupvalue(Function, 1, true)
+            debug.setupvalue(Function, 3, function() end)
+            debug.setupvalue(Function, 4, function() end)
+            debug.setupvalue(Function, 5, 25)
+            debug.setupvalue(Function, 6, true)
+        end,
+        RevertFix = function(Function)
+            local OldUpvalues = ConstantMapping.Damage.OldUpvalues
+
+            debug.setupvalue(Function, 1, OldUpvalues[1])
+            debug.setupvalue(Function, 3, OldUpvalues[3])
+            debug.setupvalue(Function, 4, OldUpvalues[4])
+            debug.setupvalue(Function, 5, OldUpvalues[5])
+            debug.setupvalue(Function, 6, OldUpvalues[6])
+        end
+    },
+
+    Kick = {
+        Constants = {"FailedPcall"},
+        CustomGrab = function(Function)
+            local OldEnv = getfenv(Function)
+
+            setfenv(Function, {
+                pcall = function()
+                    return false 
+                end
+            })
+
+            local OldKickFunction = debug.getupvalue(Function, 3)
+
+            debug.setupvalue(Function, 3, function(Key, ...)
+                debug.setupvalue(Function, 3, OldKickFunction)
+                Keys["Kick"] = Key
+            end)
+            
+            Function()
+
+            setfenv(Function, OldEnv)
+        end
     },
 
     Taze = {
@@ -268,22 +321,26 @@ for Index, Value in next, getgc() do
             for Index, ComparedName in next, ComparedConstants do
                 local ConstantMap = ConstantMapping[ComparedName]
 
-                --// Method 1
+                if ConstantMap.CustomGrab then
+                    ConstantMap.CustomGrab(Value)
+                else
+                    --// Method 1
 
-                if not ConstantMap.ProtoIndex and not ConstantMap.UpvalueIndex then
-                    KeyGrabber.GrabMethods.UpvalueScan(Value, ConstantMap, ComparedName)
-                end 
-                
-                --// Method 2 
+                    if not ConstantMap.ProtoIndex and not ConstantMap.UpvalueIndex then
+                        KeyGrabber.GrabMethods.UpvalueScan(Value, ConstantMap, ComparedName)
+                    end 
+                    
+                    --// Method 2 
 
-                if not ConstantMap.ProtoIndex and ConstantMap.UpvalueIndex then
-                    KeyGrabber.GrabMethods.NestedUpvalueScan(Value, ConstantMap, ComparedName)
-                end
+                    if not ConstantMap.ProtoIndex and ConstantMap.UpvalueIndex then
+                        KeyGrabber.GrabMethods.NestedUpvalueScan(Value, ConstantMap, ComparedName)
+                    end
 
-                --// Method 3
+                    --// Method 3
 
-                if ConstantMap.ProtoIndex then
-                    KeyGrabber.GrabMethods.ProtoScan(Value, ConstantMap, ComparedName)
+                    if ConstantMap.ProtoIndex then
+                        KeyGrabber.GrabMethods.ProtoScan(Value, ConstantMap, ComparedName)
+                    end
                 end
             end
         end
@@ -292,10 +349,8 @@ end
 
 --// Output Keys
 
-if not getgenv().DontOutput then
-    rconsolewarn(string.format("Took %s seconds to grab keys!\n", tick() - StartTime))
+rconsolewarn(string.format("Took %s seconds to grab keys!\n", tick() - StartTime))
 
-    for Index, Key in next, Keys do 
-        rconsoleprint(Index .. " : " .. Key .. "\n")
-    end
+for Index, Key in next, Keys do 
+    rconsoleprint(Index .. " : " .. Key .. "\n")
 end
