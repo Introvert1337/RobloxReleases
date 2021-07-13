@@ -292,8 +292,10 @@ end
 
 --// Output Keys
 
-rconsolewarn(string.format("Took %s seconds to grab keys!\n", tick() - StartTime))
+if not getgenv().DontOutput then
+    rconsolewarn(string.format("Took %s seconds to grab keys!\n", tick() - StartTime))
 
-for Index, Key in next, Keys do 
-    rconsoleprint(Index .. " : " .. Key .. "\n")
+    for Index, Key in next, Keys do 
+        rconsoleprint(Index .. " : " .. Key .. "\n")
+    end
 end
