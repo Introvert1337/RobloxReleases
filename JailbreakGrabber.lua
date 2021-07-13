@@ -193,6 +193,40 @@ ConstantMapping = {
         },
         LocatedFunction = require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("Item"):WaitForChild("Taser")).Tase,
         UpvalueIndex = 4
+    },
+
+    PopTire = {
+        Constants = {"LastImpactSound", "LastImpact", "OnHitSurface"},
+        ProtoIndex = 2,
+        UpvalueIndex = 7,
+        CustomArguments = {{Color = Color3.new(0, 0, 0), IsDescendantOf = function(self, Object)
+            if Object.Name == "ShootingRange" then 
+                return true 
+            end
+            
+            return false
+        end}, Vector3.new(), Vector3.new(), 0},
+        CustomFix = function(Function)
+            local OldValue = debug.getupvalue(Function, 1)
+            local OldValueSecond = debug.getupvalue(Function, 2)
+            
+            debug.setupvalue(Function, 1, {Weld = function() end, OldValue = OldValue})
+            debug.setupvalue(Function, 2, {Local = false, LastImpactSound = 0, OldValue = OldValueSecond, LastImpact = 0.2})
+            debug.setupvalue(Function, 5, game:GetService("ReplicatedStorage"))
+            debug.setupvalue(Function, 6, {
+                AddItem = function()
+                    debug.getupvalue(Function, 2).Local = true
+                end
+            })
+        end,
+        RevertFix = function(Function)
+            local OldValue = debug.getupvalue(Function, 1).OldValue
+            local OldValueSecond = debug.getupvalue(Function, 2).OldValue
+            
+            debug.setupvalue(Function, 1, OldValue)
+            debug.setupvalue(Function, 2, OldValueSecond)
+            debug.setupvalue(Function, 6, game:GetService("Debris"))
+        end
     }
 }
 
