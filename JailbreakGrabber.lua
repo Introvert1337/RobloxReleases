@@ -189,13 +189,15 @@ ConstantMapping = {
                 RayIgnoreNonCollideWithIgnoreList = function() 
                     debug.setupvalue(Function, 2, OldCasting)
 
-                    local FakeCharacter = Instance.new("Model")
-                    local FakeHumanoid = Instance.new("Part")
-
-                    FakeHumanoid.Name = "Humanoid"
-                    FakeHumanoid.Parent = FakeCharacter
-
-                    return FakeHumanoid
+                    return setmetatable({}, {
+                        __index = function(self, idx)
+                            if idx == "Parent" then 
+                                return {FindFirstChild = function() 
+                                    return true
+                                end}
+                            end
+                        end
+                    })
                 end
             })
 
