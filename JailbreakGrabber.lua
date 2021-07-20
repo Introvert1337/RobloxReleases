@@ -15,6 +15,20 @@ ConstantMapping = {
         UpvalueIndex = 1,
         ProtoIndex = 1
     },
+    
+    BrodcastInputBegan = {
+        LocatedFunction = require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("ItemSystem"):WaitForChild("ItemSystem")).Equip,
+        ProtoIndex = 5,
+        UpvalueIndex = 1,
+        CustomArguments = {true, {}}
+    },
+    
+    BrodcastInputEnded = {
+        LocatedFunction = require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("ItemSystem"):WaitForChild("ItemSystem")).Equip,
+        ProtoIndex = 6,
+        UpvalueIndex = 1,
+        CustomArguments = {true, {}}
+    },
 
     PlaySound = {
         Constants = {"Source", "Play", "FireServer"},
@@ -114,6 +128,11 @@ ConstantMapping = {
     },
 
     Damage = {
+        LocatedFunction = debug.getproto(debug.getproto(require(ReplicatedStorage.Game.MilitaryTurret.MilitaryTurretSystem).init, 1), 1),
+        UpvalueIndex = 1
+    },
+
+    FallDamage = {
         Constants = {"NoFallDamage", "NoRagdoll"},
         CustomArguments = {0},
         CustomFix = function(Function)
