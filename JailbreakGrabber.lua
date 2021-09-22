@@ -2,9 +2,9 @@
 
 getgenv().Keys = {}
 
-local StartTime = tick()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local StartTime = tick()
 
 --// Function Identification and Fixes
 
@@ -183,11 +183,23 @@ ConstantMapping = {
         CustomFix = function(Function)
             local OldCasting = debug.getupvalue(Function, 2) 
 
-            debug.setupvalue(Function, 1, {ObjectLocal = function() end})
+            debug.setupvalue(Function, 1, {getAttr = function() return 0 end, setAttr = function() end})
 
-            debug.setupvalue(Function, 2, {
+            debug.setupvalue(Function, 2, {ObjectLocal = function() end})
+
+            debug.setupvalue(Function, 3, {
+                GetPlayerFromCharacter = function() 
+                    debug.setupvalue(Function, 3, Players)
+
+                    return {Name = ""}
+                end,
+
+                GetPlayers = function() return {} end
+            })
+
+            debug.setupvalue(Function, 4, {
                 RayIgnoreNonCollideWithIgnoreList = function() 
-                    debug.setupvalue(Function, 2, OldCasting)
+                    debug.setupvalue(Function, 4, OldCasting)
 
                     return setmetatable({}, {
                         __index = function(self, idx)
@@ -198,14 +210,6 @@ ConstantMapping = {
                             end
                         end
                     })
-                end
-            })
-
-            debug.setupvalue(Function, 3, {
-                GetPlayerFromCharacter = function() 
-                    debug.setupvalue(Function, 3, Players)
-
-                    return {Name = ""}
                 end
             })
         end,
