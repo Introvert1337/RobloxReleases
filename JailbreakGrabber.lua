@@ -370,21 +370,15 @@ for Index, Value in next, getgc() do
                 if ConstantMap.CustomGrab then
                     ConstantMap.CustomGrab(Value)
                 else
-                    --// Method 1
-
-                    if not ConstantMap.ProtoIndex and not ConstantMap.UpvalueIndex then
+                    if not ConstantMap.ProtoIndex and not ConstantMap.UpvalueIndex then -- Method 1
                         KeyGrabber.GrabMethods.UpvalueScan(Value, ConstantMap, ComparedName)
                     end 
                     
-                    --// Method 2 
-
-                    if not ConstantMap.ProtoIndex and ConstantMap.UpvalueIndex then
+                    if not ConstantMap.ProtoIndex and ConstantMap.UpvalueIndex then -- Method 2
                         KeyGrabber.GrabMethods.NestedUpvalueScan(Value, ConstantMap, ComparedName)
                     end
 
-                    --// Method 3
-
-                    if ConstantMap.ProtoIndex then
+                    if ConstantMap.ProtoIndex then -- Method 3
                         KeyGrabber.GrabMethods.ProtoScan(Value, ConstantMap, ComparedName)
                     end
                 end
