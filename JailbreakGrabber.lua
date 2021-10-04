@@ -224,11 +224,10 @@ ConstantMapping = {
             return false
         end}, Vector3.new(), Vector3.new(), 0},
         CustomFix = function(Function)
-            local OldValue = debug.getupvalue(Function, 1)
-            local OldValueSecond = debug.getupvalue(Function, 2)
+            ConstantMapping.PopTire.OldUpvalues = debug.getupvalues(Function)
             
-            debug.setupvalue(Function, 1, {Weld = function() end, OldValue = OldValue})
-            debug.setupvalue(Function, 2, {Local = false, LastImpactSound = 0, OldValue = OldValueSecond, LastImpact = 0.2})
+            debug.setupvalue(Function, 1, {Weld = function() end})
+            debug.setupvalue(Function, 2, {Local = false, LastImpactSound = 0, LastImpact = 0.2})
             debug.setupvalue(Function, 5, game:GetService("ReplicatedStorage"))
             debug.setupvalue(Function, 6, {
                 AddItem = function()
@@ -237,11 +236,10 @@ ConstantMapping = {
             })
         end,
         RevertFix = function(Function)
-            local OldValue = debug.getupvalue(Function, 1).OldValue
-            local OldValueSecond = debug.getupvalue(Function, 2).OldValue
+            local OldUpvalues = ConstantMapping.PopTire.OldUpvalues
             
-            debug.setupvalue(Function, 1, OldValue)
-            debug.setupvalue(Function, 2, OldValueSecond)
+            debug.setupvalue(Function, 1, OldUpvalues[1])
+            debug.setupvalue(Function, 2, OldUpvalues[2])
             debug.setupvalue(Function, 6, game:GetService("Debris"))
         end
     }
