@@ -168,7 +168,7 @@ ConstantMapping = {
 
             local OldKickFunction = debug.getupvalue(Function, 3)
 
-            debug.setupvalue(Function, 3, function(Key, ...)
+            debug.setupvalue(Function, 3, function(Key)
                 debug.setupvalue(Function, 3, OldKickFunction)
                 Keys["Kick"] = Key
             end)
@@ -184,9 +184,7 @@ ConstantMapping = {
             local OldCasting = debug.getupvalue(Function, 2) 
 
             debug.setupvalue(Function, 1, {getAttr = function() return 0 end, setAttr = function() end})
-
             debug.setupvalue(Function, 2, {ObjectLocal = function() end})
-
             debug.setupvalue(Function, 3, {
                 GetPlayerFromCharacter = function() 
                     debug.setupvalue(Function, 3, Players)
@@ -196,7 +194,6 @@ ConstantMapping = {
 
                 GetPlayers = function() return {} end
             })
-
             debug.setupvalue(Function, 4, {
                 RayIgnoreNonCollideWithIgnoreList = function() 
                     debug.setupvalue(Function, 4, OldCasting)
