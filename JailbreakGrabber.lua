@@ -274,7 +274,7 @@ KeyGrabber = {
             local OldNetwork = debug.getupvalue(Function, UpvalueIndex)
 
             debug.setupvalue(Function, UpvalueIndex, {
-                FireServer = function(self, Key, ...)
+                FireServer = function(self, Key)
                     debug.setupvalue(Function, UpvalueIndex, OldNetwork)
 
                     if ConstantMap.RevertFix then 
