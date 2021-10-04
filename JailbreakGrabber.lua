@@ -200,16 +200,8 @@ ConstantMapping = {
             debug.setupvalue(Function, 4, {
                 RayIgnoreNonCollideWithIgnoreList = function() 
                     debug.setupvalue(Function, 4, OldCasting)
-
-                    return setmetatable({}, {
-                        __index = function(self, idx)
-                            if idx == "Parent" then 
-                                return {FindFirstChild = function() 
-                                    return true
-                                end}
-                            end
-                        end
-                    })
+                    
+                    return {Parent = {FindFirstChild = function() return true end}}
                 end
             })
         end,
