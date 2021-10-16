@@ -147,11 +147,11 @@ ConstantMapping = {
         RevertFix = function(Function)
             local OldUpvalues = ConstantMapping.Damage.OldUpvalues
 
-            debug.setupvalue(Function, 1, OldUpvalues[1])
-            debug.setupvalue(Function, 3, OldUpvalues[3])
-            debug.setupvalue(Function, 4, OldUpvalues[4])
-            debug.setupvalue(Function, 5, OldUpvalues[5])
-            debug.setupvalue(Function, 6, OldUpvalues[6])
+            for Index = 1, 6 do
+                if Index ~= 2 then
+                    debug.setupvalue(Function, Index, OldUpvalues[Index])
+                end
+            end
         end
     },
 
@@ -160,11 +160,7 @@ ConstantMapping = {
         CustomGrab = function(Function)
             local OldEnv = getfenv(Function)
 
-            setfenv(Function, {
-                pcall = function()
-                    return false 
-                end
-            })
+            setfenv(Function, {pcall = function() return false end})
 
             local OldKickFunction = debug.getupvalue(Function, 3)
 
@@ -188,7 +184,6 @@ ConstantMapping = {
             debug.setupvalue(Function, 3, {
                 GetPlayerFromCharacter = function() 
                     debug.setupvalue(Function, 3, Players)
-
                     return {Name = ""}
                 end,
 
@@ -196,8 +191,7 @@ ConstantMapping = {
             })
             debug.setupvalue(Function, 4, {
                 RayIgnoreNonCollideWithIgnoreList = function() 
-                    debug.setupvalue(Function, 4, OldCasting)
-                    
+                    debug.setupvalue(Function, 4, OldCasting)     
                     return {Parent = {FindFirstChild = function() return true end}}
                 end
             })
@@ -214,10 +208,7 @@ ConstantMapping = {
         ProtoIndex = 2,
         UpvalueIndex = 7,
         CustomArguments = {{Color = Color3.new(0, 0, 0), IsDescendantOf = function(self, Object)
-            if Object.Name == "ShootingRange" then 
-                return true 
-            end
-            
+            if Object.Name == "ShootingRange" then return true end
             return false
         end}, Vector3.new(), Vector3.new(), 0},
         CustomFix = function(Function)
@@ -225,12 +216,8 @@ ConstantMapping = {
             
             debug.setupvalue(Function, 1, {Weld = function() end})
             debug.setupvalue(Function, 2, {Local = false, LastImpactSound = 0, LastImpact = 0.2})
-            debug.setupvalue(Function, 5, game:GetService("ReplicatedStorage"))
-            debug.setupvalue(Function, 6, {
-                AddItem = function()
-                    debug.getupvalue(Function, 2).Local = true
-                end
-            })
+            debug.setupvalue(Function, 5, ReplicatedStorage)
+            debug.setupvalue(Function, 6, {AddItem = function() debug.getupvalue(Function, 2).Local = true end})
         end,
         RevertFix = function(Function)
             local OldUpvalues = ConstantMapping.PopTire.OldUpvalues
