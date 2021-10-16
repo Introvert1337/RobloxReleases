@@ -232,7 +232,6 @@ ConstantMapping = {
 --// Main Key Grabbing Functions
 
 local KeyGrabber
-
 KeyGrabber = {
     Utilities = {
         CompareConstants = function(Constants)
@@ -376,8 +375,8 @@ end
 
 --// Output Keys
 
-rconsolewarn(string.format("Took %s seconds to grab keys!\n", tick() - StartTime))
+rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - StartTime))
 
 for Index, Key in next, Keys do 
-    rconsoleprint(Index .. " : " .. Key .. "\n")
+    rconsoleprint(("%s : %s\n"):format(Index, Key))
 end
