@@ -66,9 +66,9 @@ ConstantMapping = {
         CustomArguments = {{Name = "Punch"}, true}, 
         CustomFix = function(Function)
             local Constants = getconstants(Function)
-
+            
             for Index, Constant in next, Constants do 
-                if Constant == "Play" and Index ~= #Constants and getconstant(Function, Index + 1) == "Punch" then 
+                if Constant == "Play" and getconstant(Function, Index - 1) == "LoadAnimation" then 
                     setconstant(Function, Index, "Stop")
                 end
             end
@@ -77,7 +77,7 @@ ConstantMapping = {
             local Constants = getconstants(Function)
 
             for Index, Constant in next, Constants do 
-                if Constant == "Stop" and Index ~= #Constants and getconstant(Function, Index + 1) == "Punch" then 
+                if Constant == "Stop" and getconstant(Function, Index - 1) == "LoadAnimation" then 
                     setconstant(Function, Index, "Play")
                 end
             end
@@ -367,15 +367,11 @@ for Index, Value in next, getgc() do
                 else
                     if not ConstantMap.ProtoIndex and not ConstantMap.UpvalueIndex then -- Method 1
                         KeyGrabber.GrabMethods.UpvalueScan(Value, ConstantMap, ComparedName)
-                    end 
-                    
-                    if not ConstantMap.ProtoIndex and ConstantMap.UpvalueIndex then -- Method 2
+                    elseif not ConstantMap.ProtoIndex and ConstantMap.UpvalueIndex then -- Method 2
                         KeyGrabber.GrabMethods.NestedUpvalueScan(Value, ConstantMap, ComparedName)
-                    end
-
-                    if ConstantMap.ProtoIndex then -- Method 3
+                    elseif ConstantMap.ProtoIndex then -- Method 3
                         KeyGrabber.GrabMethods.ProtoScan(Value, ConstantMap, ComparedName)
-                    end
+                    end 
                 end
             end
         end
