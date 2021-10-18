@@ -196,7 +196,6 @@ ConstantMapping = {
                     setupvalue(Function, 3, Players)
                     return {Name = ""}
                 end,
-
                 GetPlayers = function() return {} end
             })
             setupvalue(Function, 4, {
