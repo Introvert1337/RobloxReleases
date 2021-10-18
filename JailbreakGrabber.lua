@@ -6,6 +6,16 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local StartTime = tick()
 
+local getupvalue = getupvalue or debug.getupvalue 
+local setupvalue = setupvalue or debug.setupvalue
+local getupvalues = getupvalues or debug.getupvalues
+local getconstant = getconstant or debug.getconstant
+local setconstant = setconstant or debug.setconstant
+local getconstants = getconstants or debug.getconstants
+local getproto = getproto or debug.getproto
+local islclosure = islclosure or is_l_closure
+local is_synapse_function = is_synapse_function
+
 --// Function Identification and Fixes
 
 local ConstantMapping
@@ -55,20 +65,20 @@ ConstantMapping = {
         Constants = {"Punch", "Play"},
         CustomArguments = {{Name = "Punch"}, true}, 
         CustomFix = function(Function)
-            local Constants = debug.getconstants(Function)
+            local Constants = getconstants(Function)
 
             for Index, Constant in next, Constants do 
-                if Constant == "Play" and Index ~= #Constants and debug.getconstant(Function, Index + 1) == "Punch" then 
-                    debug.setconstant(Function, Index, "Stop")
+                if Constant == "Play" and Index ~= #Constants and getconstant(Function, Index + 1) == "Punch" then 
+                    setconstant(Function, Index, "Stop")
                 end
             end
         end,
         RevertFix = function(Function)
-            local Constants = debug.getconstants(Function)
+            local Constants = getconstants(Function)
 
             for Index, Constant in next, Constants do 
-                if Constant == "Stop" and Index ~= #Constants and debug.getconstant(Function, Index + 1) == "Punch" then 
-                    debug.setconstant(Function, Index, "Play")
+                if Constant == "Stop" and Index ~= #Constants and getconstant(Function, Index + 1) == "Punch" then 
+                    setconstant(Function, Index, "Play")
                 end
             end
         end
@@ -83,11 +93,11 @@ ConstantMapping = {
     ExitCar = {
         Constants = {"OnVehicleJumpExited", "FireServer", "LastVehicleExit"},
         CustomFix = function(Function)
-            local OldValue = debug.getupvalue(Function, 1)
-            debug.setupvalue(Function, 1, {OldValue = OldValue})
+            local OldValue = getupvalue(Function, 1)
+            setupvalue(Function, 1, {OldValue = OldValue})
         end,
         RevertFix = function(Function)
-            debug.setupvalue(Function, 1, debug.getupvalue(Function, 1).OldValue)
+            setupvalue(Function, 1, getupvalue(Function, 1).OldValue)
         end
     },
 
@@ -95,21 +105,21 @@ ConstantMapping = {
         Constants = {"Punch", "Play"},
         CustomArguments = {{Name = "Flip"}, true}, 
         CustomFix = function(Function)
-            local Upvalues = debug.getupvalues(Function) 
+            local Upvalues = getupvalues(Function) 
 
             for Index, Value in next, Upvalues do 
                 if type(Value) == "table" and rawget(Value, "Window") and type(Upvalues[Index + 2]) == "function" then
-                    local OldValue = debug.getupvalue(Function, Index + 1)
-                    debug.setupvalue(Function, Index + 1, {OldValue = OldValue})
+                    local OldValue = getupvalue(Function, Index + 1)
+                    setupvalue(Function, Index + 1, {OldValue = OldValue})
                 end 
             end 
         end,
         RevertFix = function(Function)
-            local Upvalues = debug.getupvalues(Function) 
+            local Upvalues = getupvalues(Function) 
 
             for Index, Value in next, Upvalues do 
                 if type(Value) == "table" and rawget(Value, "Window") and type(Upvalues[Index + 2]) == "function" then
-                    debug.setupvalue(Function, Index + 1, debug.getupvalue(Function, Index + 1).OldValue)
+                    setupvalue(Function, Index + 1, getupvalue(Function, Index + 1).OldValue)
                 end 
             end 
         end
@@ -128,7 +138,7 @@ ConstantMapping = {
     },
 
     Damage = {
-        LocatedFunction = debug.getproto(debug.getproto(require(ReplicatedStorage.Game.MilitaryTurret.MilitaryTurretSystem).init, 1), 1),
+        LocatedFunction = getproto(getproto(require(ReplicatedStorage.Game.MilitaryTurret.MilitaryTurretSystem).init, 1), 1),
         UpvalueIndex = 1
     },
 
@@ -136,20 +146,20 @@ ConstantMapping = {
         Constants = {"NoFallDamage", "NoRagdoll"},
         CustomArguments = {0},
         CustomFix = function(Function)
-            ConstantMapping.Damage.OldUpvalues = debug.getupvalues(Function)
+            ConstantMapping.Damage.OldUpvalues = getupvalues(Function)
 
-            debug.setupvalue(Function, 1, true)
-            debug.setupvalue(Function, 3, function() end)
-            debug.setupvalue(Function, 4, function() end)
-            debug.setupvalue(Function, 5, 25)
-            debug.setupvalue(Function, 6, true)
+            setupvalue(Function, 1, true)
+            setupvalue(Function, 3, function() end)
+            setupvalue(Function, 4, function() end)
+            setupvalue(Function, 5, 25)
+            setupvalue(Function, 6, true)
         end,
         RevertFix = function(Function)
             local OldUpvalues = ConstantMapping.Damage.OldUpvalues
 
             for Index = 1, 6 do
                 if Index ~= 2 then
-                    debug.setupvalue(Function, Index, OldUpvalues[Index])
+                    setupvalue(Function, Index, OldUpvalues[Index])
                 end
             end
         end
@@ -162,10 +172,10 @@ ConstantMapping = {
 
             setfenv(Function, {pcall = function() return false end})
 
-            local OldKickFunction = debug.getupvalue(Function, 3)
+            local OldKickFunction = getupvalue(Function, 3)
 
-            debug.setupvalue(Function, 3, function(Key)
-                debug.setupvalue(Function, 3, OldKickFunction)
+            setupvalue(Function, 3, function(Key)
+                setupvalue(Function, 3, OldKickFunction)
                 Keys["Kick"] = Key
             end)
             
@@ -177,21 +187,21 @@ ConstantMapping = {
 
     Taze = {
         CustomFix = function(Function)
-            local OldCasting = debug.getupvalue(Function, 2) 
+            local OldCasting = getupvalue(Function, 2) 
 
-            debug.setupvalue(Function, 1, {getAttr = function() return 0 end, setAttr = function() end})
-            debug.setupvalue(Function, 2, {ObjectLocal = function() end})
-            debug.setupvalue(Function, 3, {
+            setupvalue(Function, 1, {getAttr = function() return 0 end, setAttr = function() end})
+            setupvalue(Function, 2, {ObjectLocal = function() end})
+            setupvalue(Function, 3, {
                 GetPlayerFromCharacter = function() 
-                    debug.setupvalue(Function, 3, Players)
+                    setupvalue(Function, 3, Players)
                     return {Name = ""}
                 end,
 
                 GetPlayers = function() return {} end
             })
-            debug.setupvalue(Function, 4, {
+            setupvalue(Function, 4, {
                 RayIgnoreNonCollideWithIgnoreList = function() 
-                    debug.setupvalue(Function, 4, OldCasting)     
+                    setupvalue(Function, 4, OldCasting)     
                     return {Parent = {FindFirstChild = function() return true end}}
                 end
             })
@@ -212,19 +222,19 @@ ConstantMapping = {
             return false
         end}, Vector3.new(), Vector3.new(), 0},
         CustomFix = function(Function)
-            ConstantMapping.PopTire.OldUpvalues = debug.getupvalues(Function)
+            ConstantMapping.PopTire.OldUpvalues = getupvalues(Function)
             
-            debug.setupvalue(Function, 1, {Weld = function() end})
-            debug.setupvalue(Function, 2, {Local = false, LastImpactSound = 0, LastImpact = 0.2})
-            debug.setupvalue(Function, 5, ReplicatedStorage)
-            debug.setupvalue(Function, 6, {AddItem = function() debug.getupvalue(Function, 2).Local = true end})
+            setupvalue(Function, 1, {Weld = function() end})
+            setupvalue(Function, 2, {Local = false, LastImpactSound = 0, LastImpact = 0.2})
+            setupvalue(Function, 5, ReplicatedStorage)
+            setupvalue(Function, 6, {AddItem = function() getupvalue(Function, 2).Local = true end})
         end,
         RevertFix = function(Function)
             local OldUpvalues = ConstantMapping.PopTire.OldUpvalues
             
-            debug.setupvalue(Function, 1, OldUpvalues[1])
-            debug.setupvalue(Function, 2, OldUpvalues[2])
-            debug.setupvalue(Function, 6, game:GetService("Debris"))
+            setupvalue(Function, 1, OldUpvalues[1])
+            setupvalue(Function, 2, OldUpvalues[2])
+            setupvalue(Function, 6, game:GetService("Debris"))
         end
     }
 }
@@ -257,11 +267,11 @@ KeyGrabber = {
         end,
 
         HookFireServer = function(Function, UpvalueIndex, ConstantMap, ComparedConstants)
-            local OldNetwork = debug.getupvalue(Function, UpvalueIndex)
+            local OldNetwork = getupvalue(Function, UpvalueIndex)
 
-            debug.setupvalue(Function, UpvalueIndex, {
+            setupvalue(Function, UpvalueIndex, {
                 FireServer = function(self, Key)
-                    debug.setupvalue(Function, UpvalueIndex, OldNetwork)
+                    setupvalue(Function, UpvalueIndex, OldNetwork)
 
                     if ConstantMap.RevertFix then 
                         ConstantMap.RevertFix(Function)
@@ -289,7 +299,7 @@ KeyGrabber = {
         UpvalueScan = function(Value, ConstantMap, ComparedConstants)
             local UpvalueIndex = ConstantMap.UpvalueIndex or 1
 
-            for Index, Upvalue in next, debug.getupvalues(Value) do 
+            for Index, Upvalue in next, getupvalues(Value) do 
                 if type(Upvalue) == "table" and rawget(Upvalue, "FireServer") then
                     UpvalueIndex = Index
                 end
@@ -300,15 +310,15 @@ KeyGrabber = {
         end,
 
         NestedUpvalueScan = function(Value, ConstantMap, ComparedConstants)
-            local Upvalue = debug.getupvalues(Value)[ConstantMap.UpvalueIndex]
+            local Upvalue = getupvalues(Value)[ConstantMap.UpvalueIndex]
 
             if type(Upvalue) == "function" then
-                for Index, SecondUpvalue in next, debug.getupvalues(Upvalue) do
+                for Index, SecondUpvalue in next, getupvalues(Upvalue) do
                     if type(SecondUpvalue) == "table" and rawget(SecondUpvalue, "FireServer") then 
                         KeyGrabber.Utilities.HookFireServer(Upvalue, Index, ConstantMap, ComparedConstants)
                         KeyGrabber.Utilities.PerformCall(Upvalue, ConstantMap)
                     elseif type(SecondUpvalue) == "function" then 
-                        for SecondIndex, ThirdUpvalue in next, debug.getupvalues(SecondUpvalue) do
+                        for SecondIndex, ThirdUpvalue in next, getupvalues(SecondUpvalue) do
                             if type(ThirdUpvalue) == "table" and rawget(ThirdUpvalue, "FireServer") then 
                                 KeyGrabber.Utilities.HookFireServer(SecondUpvalue, SecondIndex, ConstantMap, ComparedConstants)
                                 KeyGrabber.Utilities.PerformCall(SecondUpvalue, ConstantMap)
@@ -320,7 +330,7 @@ KeyGrabber = {
         end,
 
         ProtoScan = function(Value, ConstantMap, ComparedConstants)
-            local Proto = debug.getproto(Value, ConstantMap.ProtoIndex)
+            local Proto = getproto(Value, ConstantMap.ProtoIndex)
 
             KeyGrabber.Utilities.HookFireServer(Proto, ConstantMap.UpvalueIndex, ConstantMap, ComparedConstants)
             KeyGrabber.Utilities.PerformCall(Proto, ConstantMap)
@@ -346,7 +356,7 @@ end
 
 for Index, Value in next, getgc() do  
     if islclosure(Value) and not is_synapse_function(Value) then 
-        local Constants = debug.getconstants(Value)
+        local Constants = getconstants(Value)
         local ComparedConstants = KeyGrabber.Utilities.CompareConstants(Constants)
         
         if ComparedConstants then 
