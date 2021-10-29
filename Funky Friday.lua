@@ -1,19 +1,26 @@
---// ENV
+--// ENV 
 
-islclosure = islclosure or is_l_closure
-getgc = getgc or get_gc_objects
-getconstants = getconstants or debug.getconstants
+local getupvalues = getupvalues or debug.getupvalues 
+local getinfo = getinfo or debug.getinfo 
+local getconstants = getconstants or debug.getconstants
+local getupvalue = getupvalue or debug.getupvalue
 
-if not islclosure or not getgc or not getconstants then 
-    return game:GetService("Players").LocalPlayer:Kick("Exploit Not Supported")
-end
+--// UI Init
 
---// Variables
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Introvert1337/Releases/master/Epic%20Thing%20Library.lua"))()
+
+local Window = Library:Window("Funky Friday")
+local AutoplayTab = Window:Tab("Autoplayer")
+local AutoplaySection = AutoplayTab:Section("Autoplay")
+
+--// Variables 
 
 local Autoplayer = {}
 local Variables = {}
 
 do 
+    Variables.ReleaseDelay = 10 
+    
     Variables.Keys = {
         "Left",
         "Down",
@@ -21,24 +28,36 @@ do
         "Right"
     }
 
-    Variables.KeyFunctions = {}
     Variables.Pressed = {}
     Variables.Constants = {}
     Variables.NoteAccuracy = {}
 
+    Variables.Percentages = {
+        ["Sick"] = 100,
+        ["Good"] = 0,
+        ["Ok"] = 0,
+        ["Bad"] = 0,
+        ["Miss"] = 0
+    }
+
     Variables.Constants.DISTANCE_TO_ACCURACY = {
-        ["Sick"] = 0.05,
-        ["Good"] = 0.1,
-        ["Ok"] = 0.15,
-        ["Bad"] = 0.2
+        ["Sick"] = 0.03,
+        ["Good"] = 0.07,
+        ["Ok"] = 0.12,
+        ["Bad"] = 0.16,
+        ["Miss"] = 0.31
     }
 
     Variables.Constants.ACCURACY_NAMES = {
         "Sick", 
         "Good", 
         "Ok", 
-        "Bad"
+        "Bad",
+        "Miss"
     }
+
+    Variables.Autoplay = false
+    Variables.Random = Random.new()
 end
 
 --// Functions
@@ -63,13 +82,23 @@ do
 
         return Distance <= Variables.Constants.DISTANCE_TO_ACCURACY[Accuracy]
     end 
+    
+    function Autoplayer:GetNote(Arrow)
+        for Index, Note in next, Variables.NoteArray do 
+            if Note.Side == Arrow.Side and Note.Position == Arrow.Position then 
+                return Note 
+            end 
+        end
+    end
 
     function Autoplayer:PressKey(Direction, Arrow)
+        local Note = Autoplayer:GetNote(Arrow)
+
         Variables.Pressed[Arrow] = true
 
-        Variables.KeyFunctions.KeyDown(Direction)
-        
-        local ReleaseDelay = shared.Settings.ReleaseDelay / 1000
+        Note:Press(true, Arrow, Arrow.Index)
+
+        local ReleaseDelay = Variables.ReleaseDelay / 1000
 
         if Arrow.Data.Length > 0 then
             wait(Arrow.Data.Length + ReleaseDelay)
@@ -77,10 +106,7 @@ do
             wait(0.05 + ReleaseDelay)
         end
 
-        Variables.KeyFunctions.KeyUp(Direction)
-
-        Variables.Pressed[Arrow] = nil
-        Variables.NoteAccuracy[Arrow] = nil
+        Note:Press(false)
     end
 
     function Autoplayer:IsPressed(Arrow)
@@ -88,57 +114,55 @@ do
     end
         
     function Autoplayer:GetHitAccuracy()
-        local Percentages = shared.Settings.Percentages
+        local Percentages = Variables.Percentages
+        
+        table.sort(Percentages, function(First, Next)
+            return First > Next
+        end)
+        
         local Total = 0 
         
-        local ChanceData = {} 
-        local ACCURACY_NAMES = Variables.Constants.ACCURACY_NAMES
+        for Index, Percentage in next, Percentages do 
+            Total = Total + Percentage
+        end
         
-        for Index = 1, #ACCURACY_NAMES do 
-            local Name = ACCURACY_NAMES[Index] 
+        if Total == 0 then 
+            return Percentages[Variables.Random:NextInteger(1, 5)]
+        end
+        
+        local StartValue = Variables.Random:NextInteger(0, Total - 1)
+        local PercentageValue = 0 
+        
+        for Index, Percentage in next, Percentages do 
+            PercentageValue = PercentageValue + Percentage
             
-            if Percentages[Name] > 0 then 
-                ChanceData[Percentages[Name]] = Name 
+            if PercentageValue > StartValue then 
+                return Index 
             end
         end
         
-        local Entries = {} 
-        
-        for Index, Chance in next, ChanceData do 
-            Entries[Chance] = {Min = Total, Max = Total + Index} 
-            Total = Total + Index 
-        end
-        
-        local Percentage = math.random(0, 100) 
-        
-        for Index, Entry in next, Entries do 
-            if Entry.Min <= Percentage and Entry.Max >= Percentage then 
-                return Index
-            end
-        end 
+        return "Sick"
     end
 end
 
---// Init GC loop
+--// Fetch Game Utilities
 
 for Index, Value in next, getgc(true) do
     if type(Value) == "table" and rawget(Value, "GameUI") then
         Variables.Framework = Value
-    elseif type(Value) == "function" and islclosure(Value) and tostring(getfenv(Value).script) == "Arrows" then
+    elseif type(Value) == "function" and islclosure(Value) and getinfo(Value).source:find("Arrows") then
 		local Constants = getconstants(Value)
-		 
-		if table.find(Constants, "CurrentScore") and table.find(Constants, "Data") then 
-			Variables.KeyFunctions.KeyUp = Value 
-		elseif table.find(Constants, "NewThread") and table.find(Constants, "Section") then
-			Variables.KeyFunctions.KeyDown = Value 
+
+		if table.find(Constants, "ReceptorPressed") and table.find(Constants, "Default") then 
+			Variables.NoteArray = getupvalue(Value, #getupvalues(Value))
 		end 
     end
 end
 
---// Main autoplayer loop
+--// Main Autoplayer Loop 
 
 game:GetService("RunService").Heartbeat:Connect(function()
-    if shared.Settings.Autoplay then
+    if Variables.Autoplay then
         for Index, Arrow in next, Variables.Framework.UI.ActiveSections do
             if Arrow.Side == Variables.Framework.UI.CurrentSide then 
                 local Direction = Autoplayer:GetDirection(Arrow.Data.Position)
@@ -151,3 +175,19 @@ game:GetService("RunService").Heartbeat:Connect(function()
         end
     end
 end)
+
+--// UI Options
+
+AutoplaySection:Toggle("Autoplayer", false, function(Value)
+    Variables.Autoplay = Value
+end)
+
+AutoplaySection:Slider("Release Delay", {min = 0, max = 200, default = 10}, function(Value)
+	Variables.ReleaseDelay = Value
+end)
+
+for Index, Accuracy in next, Variables.Constants.ACCURACY_NAMES do 
+    AutoplaySection:Slider(Accuracy .. " Percentage", {min = 0, default = Accuracy == "Sick" and 100 or 0, max = 100}, function(Value)
+        Variables.Percentages[Accuracy] = Value
+    end)
+end
