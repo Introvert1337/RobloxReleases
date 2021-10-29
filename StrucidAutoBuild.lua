@@ -1,17 +1,23 @@
 --// ENV
 
-getupvalue = getupvalue or debug.getupvalue 
-setupvalue = setupvalue or debug.setupvalue 
+local getupvalue = getupvalue or debug.getupvalue 
+local setupvalue = setupvalue or debug.setupvalue 
 
 --// Define Variables
 
+shared.build_cube_around_yourself_keybind = shared.build_cube_around_yourself_keybind or "K"
+shared.build_cube_around_closest_enemy_keybind = shared.build_cube_around_closest_enemy_keybind or "Z"
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Player = game:GetService("Players").LocalPlayer
+
 local SelfKeybind = Enum.KeyCode[shared.build_cube_around_yourself_keybind:upper()]
 local ClosestKeybind = Enum.KeyCode[shared.build_cube_around_closest_enemy_keybind:upper()]
+
 local GlobalStuff = require(ReplicatedStorage.GlobalStuff)
 local NetworkModule = require(ReplicatedStorage.NetworkModule)
 local BuildModule = require(ReplicatedStorage.BuildModule)
-local player = game:GetService("Players").LocalPlayer
+
 local pi = math.pi
 local floor = math.floor
 
@@ -31,47 +37,44 @@ end
 
 --// Function to build the cube
 
-local function Build(delta)
-    for i = 1, 5 do --// Modify the position offset each time to have it make a cube
-        spawn(function()
-            local Offset = Offsets[i]
-            local Position = GetClosest(delta + Offset)
-            local AnglesY = GlobalStuff:Round(Angles[i], pi / 2)
-            local ObjectName = "Wall"
-
-            if i == 5 then 
-                ObjectName = "Floor"
-                Position = Position + Offset 
-            end
+local function Build(Delta)
+    for Index = 1, 5 do --// Modify the position offset each time to have it make a cube
+        coroutine.wrap(function()
+            local Offset = Offsets[Index]
+            local ClosestPosition = GetClosest(Delta + Offset)
+            local Position = Index == 5 and ClosestPosition + Offset or ClosestPosition 
+            local AnglesY = GlobalStuff:Round(Angles[Index], pi / 2)
+            local ObjectName = Index == 5 and "Floor" or "Wall"
 
             --// Call Strucid's Functions / Remotes To Build 
 
-            BuildModule:UpdateGridData(Position.X, Position.Y, Position.Z, ObjectName, AnglesY, player.Name)
+            BuildModule:UpdateGridData(Position.X, Position.Y, Position.Z, ObjectName, AnglesY, Player.Name)
 
             local Response = NetworkModule:InvokeServer("Build", Position.X, Position.Y, Position.Z, ObjectName, AnglesY)
         
             if Response == true then
-                local UpdateResourceCount = getsenv(player.PlayerGui.MainGui.MainLocal).UpdateResourceCount
+                local UpdateResourceCount = getsenv(Player.PlayerGui.MainGui.MainLocal).UpdateResourceCount
                 setupvalue(UpdateResourceCount, 2, getupvalue(UpdateResourceCount, 2) - 10)
                 UpdateResourceCount()
             elseif Response == false then
                 BuildModule:UpdateGridData(Position.X, Position.Y, Position.Z, nil);
             end 
-        end)
+        end)()
     end
 end
 
 game:GetService("UserInputService").InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Keyboard  then
-        if player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild("MainGui") and player.PlayerGui.MainGui:FindFirstChild("MainLocal") then --// Check is player is spawned in
+        if Player:FindFirstChild("PlayerGui") and Player.PlayerGui:FindFirstChild("MainGui") and Player.PlayerGui.MainGui:FindFirstChild("MainLocal") then --// Check if player is spawned in
             if input.KeyCode == ClosestKeybind then 
-                local ClosestPlayer = getsenv(player.PlayerGui.MainGui.MainLocal).GetClosestPlayer()
+                local ClosestPlayer = getsenv(Player.PlayerGui.MainGui.MainLocal).GetClosestPlayer()
+
                 if ClosestPlayer and ClosestPlayer.Character and ClosestPlayer.Character:FindFirstChild("HumanoidRootPart") then
                     Build(ClosestPlayer.Character.HumanoidRootPart.Position)
                 end
             elseif input.KeyCode == SelfKeybind then 
-                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then 
-                    Build(player.Character.HumanoidRootPart.Position)
+                if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then 
+                    Build(Player.Character.HumanoidRootPart.Position)
                 end
             end
         end
