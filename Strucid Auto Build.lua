@@ -1,3 +1,5 @@
+--// im pretty sure this is outdated but if u wanna fix it and release ur own version u have permission :)
+
 --// ENV
 
 local getupvalue = getupvalue or debug.getupvalue 
