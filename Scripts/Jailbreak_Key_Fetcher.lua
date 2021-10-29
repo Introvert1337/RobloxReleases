@@ -1,3 +1,5 @@
+-- this is my favourite script i've made :)
+
 --// Init Variables
 
 getgenv().Keys = {}
