@@ -156,7 +156,7 @@ for Index, Value in next, getgc(true) do
 	local Constants = getconstants(Value)
 
 	if table.find(Constants, "ReceptorPressed") and table.find(Constants, "Default") then 
-		Variables.NoteArray = getupvalue(Value, #getupvalues(Value))
+	     Variables.NoteArray = getupvalue(Value, #getupvalues(Value))
 	end 
     end
 end
