@@ -1,3 +1,5 @@
+-- made a few months back, unpatched and rewritten recently
+
 --// ENV 
 
 local getupvalues = getupvalues or debug.getupvalues 
