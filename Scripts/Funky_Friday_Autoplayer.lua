@@ -156,7 +156,7 @@ for Index, Value in next, getgc(true) do
 	local Constants = getconstants(Value)
 
 	if table.find(Constants, "ReceptorPressed") and table.find(Constants, "Default") then 
-	     Variables.NoteArray = getupvalue(Value, #getupvalues(Value))
+	    Variables.NoteArray = getupvalue(Value, #getupvalues(Value))
 	end 
     end
 end
@@ -185,7 +185,7 @@ AutoplaySection:Toggle("Autoplayer", false, function(Value)
 end)
 
 AutoplaySection:Slider("Release Delay", {min = 0, max = 200, default = 10}, function(Value)
-	Variables.ReleaseDelay = Value
+    Variables.ReleaseDelay = Value
 end)
 
 for Index, Accuracy in next, Variables.Constants.ACCURACY_NAMES do 
