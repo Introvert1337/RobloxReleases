@@ -153,11 +153,11 @@ for Index, Value in next, getgc(true) do
     if type(Value) == "table" and rawget(Value, "GameUI") then
         Variables.Framework = Value
     elseif type(Value) == "function" and islclosure(Value) and getinfo(Value).source:find("Arrows") then
-		local Constants = getconstants(Value)
+	local Constants = getconstants(Value)
 
-		if table.find(Constants, "ReceptorPressed") and table.find(Constants, "Default") then 
-			Variables.NoteArray = getupvalue(Value, #getupvalues(Value))
-		end 
+	if table.find(Constants, "ReceptorPressed") and table.find(Constants, "Default") then 
+		Variables.NoteArray = getupvalue(Value, #getupvalues(Value))
+	end 
     end
 end
 
