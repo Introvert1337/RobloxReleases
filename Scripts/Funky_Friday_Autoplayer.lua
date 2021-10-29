@@ -7,7 +7,7 @@ local getupvalue = getupvalue or debug.getupvalue
 
 --// UI Init
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Introvert1337/Releases/master/Epic%20Thing%20Library.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Introvert1337/Releases/master/Utilities/Epic_Thing_Library.lua"))()
 
 local Window = Library:Window("Funky Friday")
 local AutoplayTab = Window:Tab("Autoplayer")
