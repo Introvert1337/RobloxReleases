@@ -1,4 +1,4 @@
---// this was mostly made by sor
+-- this was mostly made by sor
 
 local key_handler = game:GetService("ReplicatedStorage").Assets.Modules.KeyHandler;
 
