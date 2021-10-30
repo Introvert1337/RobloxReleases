@@ -66,6 +66,8 @@ local function Build(Delta)
     end
 end
 
+--// key pressed event to call build function
+
 game:GetService("UserInputService").InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Keyboard  then
         if Player:FindFirstChild("PlayerGui") and Player.PlayerGui:FindFirstChild("MainGui") and Player.PlayerGui.MainGui:FindFirstChild("MainLocal") then --// Check if player is spawned in
