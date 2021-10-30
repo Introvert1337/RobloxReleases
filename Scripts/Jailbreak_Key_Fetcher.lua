@@ -218,10 +218,7 @@ ConstantMapping = {
         Constants = {"LastImpactSound", "LastImpact", "OnHitSurface"},
         ProtoIndex = 2,
         UpvalueIndex = 7,
-        CustomArguments = {{Color = Color3.new(0, 0, 0), IsDescendantOf = function(self, Object)
-            if Object.Name == "ShootingRange" then return true end
-            return false
-        end}, Vector3.new(), Vector3.new(), 0},
+        CustomArguments = {{Color = Color3.new(0, 0, 0), IsDescendantOf = function(self, obj) return obj.Name == "ShootingRange" end}, Vector3.new(), Vector3.new(), 0},
         CustomFix = function(Function)
             ConstantMapping.PopTire.OldUpvalues = getupvalues(Function)
             
