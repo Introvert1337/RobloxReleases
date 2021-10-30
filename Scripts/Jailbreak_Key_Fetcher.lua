@@ -189,7 +189,7 @@ ConstantMapping = {
 
     Taze = {
         CustomFix = function(Function)
-            local OldCasting = getupvalue(Function, 2) 
+            local OldCasting = getupvalue(Function, 4) 
 
             setupvalue(Function, 1, {getAttr = function() return 0 end, setAttr = function() end})
             setupvalue(Function, 2, {ObjectLocal = function() end})
