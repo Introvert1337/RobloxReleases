@@ -8,6 +8,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local StartTime = tick()
 
+--// Localizations
+
 local getupvalue = getupvalue or debug.getupvalue 
 local setupvalue = setupvalue or debug.setupvalue
 local getupvalues = getupvalues or debug.getupvalues
@@ -15,8 +17,17 @@ local getconstant = getconstant or debug.getconstant
 local setconstant = setconstant or debug.setconstant
 local getconstants = getconstants or debug.getconstants
 local getproto = getproto or debug.getproto
+
 local islclosure = islclosure or is_l_closure
 local is_synapse_function = is_synapse_function
+
+local tfind = table.find
+local tinsert = table.insert
+
+local require = require
+local type = type 
+local rawget = rawget
+local unpack = unpack
 
 --// Function Identification and Fixes
 
@@ -95,11 +106,11 @@ ConstantMapping = {
     ExitCar = {
         Constants = {"OnVehicleJumpExited", "FireServer", "LastVehicleExit"},
         CustomFix = function(Function)
-            local OldValue = getupvalue(Function, 1)
-            setupvalue(Function, 1, {OldValue = OldValue})
+            ConstantMapping.ExitCar.OldUpvalue = getupvalue(Function, 1)
+            setupvalue(Function, 1, {})
         end,
         RevertFix = function(Function)
-            setupvalue(Function, 1, getupvalue(Function, 1).OldValue)
+            setupvalue(Function, 1, ConstantMapping.ExitCar.OldUpvalue)
         end
     },
 
@@ -208,7 +219,7 @@ ConstantMapping = {
             })
         end,
         CustomArguments = {
-            {ItemData = {NextUse = 0}, CrossHair = {Flare = function() end, Spring = {Accelerate = function() end}}, Config = {Sound = {tazer_buzz = 0}, ReloadTime = 0, ReloadTimeHit = 0}, IgnoreList = {}, Draw = function() end, BroadcastInputBegan = function() end, UpdateMousePosition = function() end, Tip = Instance.new("Part"), Local = true, MousePosition = Vector3.new(0, 0, 0)}
+            {ItemData = {NextUse = 0}, CrossHair = {Flare = function() end, Spring = {Accelerate = function() end}}, Config = {Sound = {tazer_buzz = 0}, ReloadTime = 0, ReloadTimeHit = 0}, IgnoreList = {}, Draw = function() end, BroadcastInputBegan = function() end, UpdateMousePosition = function() end, Tip = Instance.new("Part"), Local = true, MousePosition = Vector3.new()}
         },
         LocatedFunction = require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("Item"):WaitForChild("Taser")).Tase,
         UpvalueIndex = 4
@@ -250,13 +261,13 @@ KeyGrabber = {
                     local Amount = 0 
         
                     for Index, Constant in next, ConstantMap.Constants do 
-                        if table.find(Constants, Constant) then 
+                        if tfind(Constants, Constant) then 
                             Amount = Amount + 1 
                         end 
                     end
         
                     if Amount == #ConstantMap.Constants then 
-                        table.insert(Matches, Index)
+                        tinsert(Matches, Index)
                     end
                 end
             end
