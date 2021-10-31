@@ -122,8 +122,8 @@ ConstantMapping = {
 
             for Index, Value in next, Upvalues do 
                 if type(Value) == "table" and rawget(Value, "Window") and type(Upvalues[Index + 2]) == "function" then
-                    local OldValue = getupvalue(Function, Index + 1)
-                    setupvalue(Function, Index + 1, {OldValue = OldValue})
+                    ConstantMapping.Flip.OldUpvalue = getupvalue(Function, Index + 1)
+                    setupvalue(Function, Index + 1, {})
                 end 
             end 
         end,
@@ -132,7 +132,7 @@ ConstantMapping = {
 
             for Index, Value in next, Upvalues do 
                 if type(Value) == "table" and rawget(Value, "Window") and type(Upvalues[Index + 2]) == "function" then
-                    setupvalue(Function, Index + 1, getupvalue(Function, Index + 1).OldValue)
+                    setupvalue(Function, Index + 1, ConstantMapping.Flip.OldUpvalue)
                 end 
             end 
         end
