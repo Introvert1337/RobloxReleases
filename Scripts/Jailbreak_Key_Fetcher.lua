@@ -17,7 +17,6 @@ local getconstant = getconstant or debug.getconstant
 local setconstant = setconstant or debug.setconstant
 local getconstants = getconstants or debug.getconstants
 local getproto = getproto or debug.getproto
-
 local islclosure = islclosure or is_l_closure
 local is_synapse_function = is_synapse_function
 
