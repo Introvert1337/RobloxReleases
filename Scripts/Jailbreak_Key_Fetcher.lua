@@ -255,18 +255,22 @@ KeyGrabber = {
         CompareConstants = function(Constants)
             local Matches = {}
 
-            for Index, ConstantMap in next, ConstantMapping do 
+            for Index, ConstantMap in next, ConstantMapping do
                 if ConstantMap.Constants then
-                    local Amount = 0 
-        
-                    for Index, Constant in next, ConstantMap.Constants do 
-                        if tfind(Constants, Constant) then 
-                            Amount = Amount + 1 
-                        end 
-                    end
-        
-                    if Amount == #ConstantMap.Constants then 
-                        tinsert(Matches, Index)
+                    local MapConstants = ConstantMap.Constants
+                    
+                    if tfind(Constants, MapConstants[1]) then 
+                        local Amount = 1
+            
+                        for Index = 2, #MapConstants do 
+                            if tfind(Constants, MapConstants[Index]) then 
+                                Amount = Amount + 1 
+                            end 
+                        end
+            
+                        if Amount == #ConstantMap.Constants then 
+                            tinsert(Matches, Index)
+                        end
                     end
                 end
             end
@@ -365,6 +369,7 @@ end
 for Index, Value in next, getgc() do  
     if islclosure(Value) and not is_synapse_function(Value) then 
         local Constants = getconstants(Value)
+        
         local ComparedConstants = KeyGrabber.Utilities.CompareConstants(Constants)
         
         if ComparedConstants then 
