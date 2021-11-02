@@ -119,19 +119,15 @@ ConstantMapping = {
 
             for Index, Value in next, Upvalues do 
                 if type(Value) == "table" and rawget(Value, "Window") and type(Upvalues[Index + 2]) == "function" then
-                    ConstantMapping.Flip.OldUpvalue = getupvalue(Function, Index + 1)
+                    ConstantMapping.Flip.OldUpvalue = {Index = Index + 1, Value = getupvalue(Function, Index + 1)}
                     setupvalue(Function, Index + 1, {})
                 end 
             end 
         end,
         RevertFix = function(Function)
-            local Upvalues = getupvalues(Function) 
-
-            for Index, Value in next, Upvalues do 
-                if type(Value) == "table" and rawget(Value, "Window") and type(Upvalues[Index + 2]) == "function" then
-                    setupvalue(Function, Index + 1, ConstantMapping.Flip.OldUpvalue)
-                end 
-            end 
+            local OldUpvalue = ConstantMapping.Flip.OldUpvalue
+            
+            setupvalue(Function, OldUpvalue.Index, OldUpvalue.Value)
         end
     },
 
