@@ -6,7 +6,7 @@ end
 
 --// Init Variables
 
-getgenv().Keys = {}
+local Keys = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -389,6 +389,8 @@ for Index, Value in next, getgc() do
 end
 
 --// Output Keys
+
+getgenv().Keys = Keys
 
 rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - StartTime))
 
