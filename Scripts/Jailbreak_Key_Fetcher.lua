@@ -14,9 +14,6 @@ local StartTime = tick()
 
 local Network = getupvalue(require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("ItemSystem"):WaitForChild("ItemSystem")).Init, 1)
 
-shared.OutputKeys = shared.OutputKeys == nil and true or shared.OutputKeys
-shared.AddToEnv = shared.AddToEnv == nil and true or shared.AddToEnv
-
 --// Localizations
 
 local getupvalue = getupvalue or debug.getupvalue 
