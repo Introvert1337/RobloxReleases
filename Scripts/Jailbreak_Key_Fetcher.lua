@@ -118,7 +118,7 @@ ConstantMapping = {
             local Upvalues = getupvalues(Function) 
 
             for Index, Value in next, Upvalues do 
-                if type(Value) == "table" and rawget(Value, "Window") and type(Upvalues[Index + 2]) == "function" then
+                if type(Value) == "table" and rawget(Value, "Window") then
                     ConstantMapping.Flip.OldUpvalue = {Index = Index + 1, Value = getupvalue(Function, Index + 1)}
                     setupvalue(Function, Index + 1, {})
                 end 
