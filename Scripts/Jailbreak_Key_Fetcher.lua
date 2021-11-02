@@ -299,18 +299,22 @@ KeyGrabber = {
             })
         end,
 
-        PerformCall = function(Function, ConstantMap)
-            pcall(function()
+        PerformCall = function(Function, ConstantMap, KeyName)
+            local Success, Error = pcall(function()
                 if ConstantMap.CustomFix then 
                     ConstantMap.CustomFix(Function)
                 end
-    
+
                 if ConstantMap.CustomArguments then
                     Function(unpack(ConstantMap.CustomArguments))
                 else 
                     Function()
                 end
             end)
+            
+            if not Success then 
+                warn(("Failed to grab key for: %s\nError: %s"):format(KeyName or "Unknown", Error))
+            end
         end
     },
 
@@ -325,7 +329,7 @@ KeyGrabber = {
             end
 
             KeyGrabber.Utilities.HookFireServer(Value, UpvalueIndex, ConstantMap, ComparedConstants)
-            KeyGrabber.Utilities.PerformCall(Value, ConstantMap)
+            KeyGrabber.Utilities.PerformCall(Value, ConstantMap, ComparedConstants)
         end,
 
         NestedUpvalueScan = function(Value, ConstantMap, ComparedConstants)
@@ -335,12 +339,12 @@ KeyGrabber = {
                 for Index, SecondUpvalue in next, getupvalues(Upvalue) do
                     if type(SecondUpvalue) == "table" and rawget(SecondUpvalue, "FireServer") then 
                         KeyGrabber.Utilities.HookFireServer(Upvalue, Index, ConstantMap, ComparedConstants)
-                        KeyGrabber.Utilities.PerformCall(Upvalue, ConstantMap)
+                        KeyGrabber.Utilities.PerformCall(Upvalue, ConstantMap, ComparedConstants)
                     elseif type(SecondUpvalue) == "function" then 
                         for SecondIndex, ThirdUpvalue in next, getupvalues(SecondUpvalue) do
                             if type(ThirdUpvalue) == "table" and rawget(ThirdUpvalue, "FireServer") then 
                                 KeyGrabber.Utilities.HookFireServer(SecondUpvalue, SecondIndex, ConstantMap, ComparedConstants)
-                                KeyGrabber.Utilities.PerformCall(SecondUpvalue, ConstantMap)
+                                KeyGrabber.Utilities.PerformCall(SecondUpvalue, ConstantMap, ComparedConstants)
                             end
                         end
                     end
@@ -352,7 +356,7 @@ KeyGrabber = {
             local Proto = getproto(Value, ConstantMap.ProtoIndex)
 
             KeyGrabber.Utilities.HookFireServer(Proto, ConstantMap.UpvalueIndex, ConstantMap, ComparedConstants)
-            KeyGrabber.Utilities.PerformCall(Proto, ConstantMap)
+            KeyGrabber.Utilities.PerformCall(Proto, ConstantMap, ComparedConstants)
         end
     }
 }
