@@ -300,15 +300,17 @@ KeyGrabber = {
         end,
 
         PerformCall = function(Function, ConstantMap)
-            if ConstantMap.CustomFix then 
-                ConstantMap.CustomFix(Function)
-            end
-
-            if ConstantMap.CustomArguments then
-                Function(unpack(ConstantMap.CustomArguments))
-            else 
-                Function()
-            end
+            pcall(function()
+                if ConstantMap.CustomFix then 
+                    ConstantMap.CustomFix(Function)
+                end
+    
+                if ConstantMap.CustomArguments then
+                    Function(unpack(ConstantMap.CustomArguments))
+                else 
+                    Function()
+                end
+            end)
         end
     },
 
