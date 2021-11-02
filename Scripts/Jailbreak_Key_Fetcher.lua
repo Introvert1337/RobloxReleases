@@ -374,7 +374,11 @@ end
 
 -- Main GC Loop to Grab Keys From Non-Located Functions
 
-for Index, Value in next, getgc() do  
+local GarbageCollection = getgc()
+
+for Index = 1, #GarbageCollection do  
+    local Value = GarbageCollection[Index]
+    
     if islclosure(Value) and not is_synapse_function(Value) then 
         local ComparedConstants = KeyGrabber.Utilities.CompareConstants(getconstants(Value))
         
