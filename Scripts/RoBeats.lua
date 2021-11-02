@@ -386,18 +386,18 @@ local function update_autoplayer(_game, target_delay)
             local NoteTrack = Note:get_track_index(Index)
 
             for Index, Value in next, Note do 
-				if type(Value) == "function" then 
-					for Index, Constant in next, getconstants(Value) do 
-					    if Constant == "get_delta_time_from_release_time" then 
-					        TEST_RELEASE_FUNC = Value
+		if type(Value) == "function" then 
+		    for Index, Constant in next, getconstants(Value) do 
+			if Constant == "get_delta_time_from_release_time" then 
+			    TEST_RELEASE_FUNC = Value
                             break
                         elseif Constant  == "get_delta_time_from_hit_time" then
-					        TEST_HIT_FUNC = Value
+			    TEST_HIT_FUNC = Value
                             break
-					    end 
-					end
-				end 
-			end
+		 	end 
+		    end
+		end 
+	    end
 
             if HeldNotes[NoteTrack] and TEST_RELEASE_FUNC then
                 local Released, Result, Delay = TEST_RELEASE_FUNC(Note, _game, 0)
