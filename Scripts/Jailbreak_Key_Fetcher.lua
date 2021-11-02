@@ -12,6 +12,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local StartTime = tick()
 
+local Network = getupvalue(require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("ItemSystem"):WaitForChild("ItemSystem")).Init, 1)
+
+shared.OutputKeys = shared.OutputKeys == nil and true or shared.OutputKeys
+shared.AddToEnv = shared.AddToEnv == nil and true or shared.AddToEnv
+
 --// Localizations
 
 local getupvalue = getupvalue or debug.getupvalue 
@@ -390,12 +395,23 @@ end
 
 --// Output Keys
 
-rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - StartTime))
-
-for Index, Key in next, Keys do 
-    rconsoleprint(("%s : %s\n"):format(Index, Key))
+if shared.OutputKeys then
+    rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - StartTime))
+    
+    for Index, Key in next, Keys do 
+        rconsoleprint(("%s : %s\n"):format(Index, Key))
+    end
 end
 
---// Add Keys to Global Environment
+--// Add Keys and Network to Global Environment
 
-getgenv().Keys = Keys
+if shared.AddToEnv then
+    local Environment = getgenv()
+    
+    Environment.Keys = Keys
+    Environment.Network = Network
+end
+
+--// Return Keys and Network
+
+return Keys, Network
