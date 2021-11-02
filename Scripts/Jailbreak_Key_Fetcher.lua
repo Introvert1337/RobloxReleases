@@ -1,3 +1,9 @@
+--// Game Loaded
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
 --// Init Variables
 
 getgenv().Keys = {}
