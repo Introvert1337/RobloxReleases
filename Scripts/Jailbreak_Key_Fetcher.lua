@@ -390,10 +390,12 @@ end
 
 --// Output Keys
 
-getgenv().Keys = Keys
-
 rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - StartTime))
 
 for Index, Key in next, Keys do 
     rconsoleprint(("%s : %s\n"):format(Index, Key))
 end
+
+--// Add Keys to Global Environment
+
+getgenv().Keys = Keys
