@@ -1,5 +1,3 @@
--- this is my favourite script i've made :)
-
 --// Init Variables
 
 getgenv().Keys = {}
@@ -368,25 +366,21 @@ end
 
 for Index, Value in next, getgc() do  
     if islclosure(Value) and not is_synapse_function(Value) then 
-        local Constants = getconstants(Value)
-        
-        local ComparedConstants = KeyGrabber.Utilities.CompareConstants(Constants)
+        local ComparedConstants = KeyGrabber.Utilities.CompareConstants(getconstants(Value))
         
         if ComparedConstants then 
             for Index, ComparedName in next, ComparedConstants do
                 local ConstantMap = ConstantMapping[ComparedName]
 
-                if ConstantMap.CustomGrab then
+                if ConstantMap.CustomGrab then -- Custom Method
                     ConstantMap.CustomGrab(Value)
-                else
-                    if not ConstantMap.ProtoIndex and not ConstantMap.UpvalueIndex then -- Method 1
-                        KeyGrabber.GrabMethods.UpvalueScan(Value, ConstantMap, ComparedName)
-                    elseif not ConstantMap.ProtoIndex and ConstantMap.UpvalueIndex then -- Method 2
-                        KeyGrabber.GrabMethods.NestedUpvalueScan(Value, ConstantMap, ComparedName)
-                    elseif ConstantMap.ProtoIndex then -- Method 3
-                        KeyGrabber.GrabMethods.ProtoScan(Value, ConstantMap, ComparedName)
-                    end 
-                end
+                elseif not ConstantMap.ProtoIndex and not ConstantMap.UpvalueIndex then -- Method 1
+                    KeyGrabber.GrabMethods.UpvalueScan(Value, ConstantMap, ComparedName)
+                elseif not ConstantMap.ProtoIndex and ConstantMap.UpvalueIndex then -- Method 2
+                    KeyGrabber.GrabMethods.NestedUpvalueScan(Value, ConstantMap, ComparedName)
+                elseif ConstantMap.ProtoIndex then -- Method 3
+                    KeyGrabber.GrabMethods.ProtoScan(Value, ConstantMap, ComparedName)
+                end 
             end
         end
     end 
