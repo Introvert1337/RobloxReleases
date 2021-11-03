@@ -22,7 +22,7 @@ local CamPart = workspace:WaitForChild("CamPart")
 local RaceTextBox = Player.PlayerGui:WaitForChild("ScreenGui"):WaitForChild("Main"):WaitForChild("RaceScreen"):WaitForChild("TextBox")
 local RaceTextChanged = getconnections(RaceTextBox:GetPropertyChangedSignal("Text"))[1].Function 
 
-local WaitTime = shared.WaitTime / 1000 or 0
+local WaitTime = shared.WaitTime and shared.WaitTime / 1000 or 0
 
 --// Typing Functions & Utilities
 
