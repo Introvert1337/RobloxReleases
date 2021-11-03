@@ -4,8 +4,6 @@ if not game:IsLoaded() then
     game.Loaded:Wait()
 end 
 
-shared.WaitTime = 1000
-
 --// Localizations
 
 local getconstant = getconstant or debug.getconstant
