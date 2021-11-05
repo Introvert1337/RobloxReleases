@@ -12,7 +12,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local StartTime = tick()
 
-local Network = getupvalue(require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("ItemSystem"):WaitForChild("ItemSystem")).Init, 1)
+local ItemSystem = require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("ItemSystem"):WaitForChild("ItemSystem"))
+local Network = getupvalue(ItemSystem.Init, 1)
 
 --// Localizations
 
@@ -24,7 +25,7 @@ local setconstant = setconstant or debug.setconstant
 local getconstants = getconstants or debug.getconstants
 local getproto = getproto or debug.getproto
 local islclosure = islclosure or is_l_closure
-local is_synapse_function = is_synapse_function
+local is_exploit_function = is_synapse_function or is_protosmasher_closure or checkclosure
 
 local tfind = table.find
 local tinsert = table.insert
@@ -45,14 +46,14 @@ ConstantMapping = {
     },
     
     BrodcastInputBegan = {
-        LocatedFunction = require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("ItemSystem"):WaitForChild("ItemSystem")).Equip,
+        LocatedFunction = ItemSystem._equip,
         ProtoIndex = 5,
         UpvalueIndex = 1,
         CustomArguments = {true, {}}
     },
     
     BrodcastInputEnded = {
-        LocatedFunction = require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("ItemSystem"):WaitForChild("ItemSystem")).Equip,
+        LocatedFunction = ItemSystem._equip,
         ProtoIndex = 6,
         UpvalueIndex = 1,
         CustomArguments = {true, {}}
@@ -201,21 +202,29 @@ ConstantMapping = {
 
     Taze = {
         CustomFix = function(Function)
-            local OldCasting = getupvalue(Function, 4) 
-
-            setupvalue(Function, 1, {getAttr = function() return 0 end, setAttr = function() end})
-            setupvalue(Function, 2, {ObjectLocal = function() end})
+            local OldItemUtils = getupvalue(Function, 1)
+            local OldAudio = getupvalue(Function, 2)
+            local OldCasting = getupvalue(Function, 5) 
+            local OldPlayerUtils = getupvalue(Function, 6)
+            
+            setupvalue(Function, 1, {getAttr = function() return 0 end, setAttr = function() setupvalue(Function, 1, OldItemUtil) end})
+            setupvalue(Function, 2, {ObjectLocal = function() setupvalue(Function, 2, OldAudio) end})
             setupvalue(Function, 3, {
-                GetPlayerFromCharacter = function() 
+                GetPlayers = function() 
                     setupvalue(Function, 3, Players)
-                    return {Name = ""}
-                end,
-                GetPlayers = function() return {} end
+                    return {}
+                end
             })
-            setupvalue(Function, 4, {
+            setupvalue(Function, 5, {
                 RayIgnoreNonCollideWithIgnoreList = function() 
-                    setupvalue(Function, 4, OldCasting)     
-                    return {Parent = {FindFirstChild = function() return true end}}
+                    setupvalue(Function, 5, OldCasting)     
+                    return true
+                end
+            })
+            setupvalue(Function, 6, {
+                getPlayerFromDescendant = function() 
+                    setupvalue(Function, 6, OldPlayerUtils)
+                    return {Name = ""}
                 end
             })
         end,
@@ -379,7 +388,7 @@ local GarbageCollection = getgc()
 for Index = 1, #GarbageCollection do  
     local Value = GarbageCollection[Index]
     
-    if islclosure(Value) and not is_synapse_function(Value) then 
+    if islclosure(Value) and not is_exploit_function(Value) then 
         local ComparedConstants = KeyGrabber.Utilities.CompareConstants(getconstants(Value))
         
         if ComparedConstants then 
