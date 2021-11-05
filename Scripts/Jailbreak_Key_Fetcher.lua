@@ -207,7 +207,7 @@ ConstantMapping = {
             local OldCasting = getupvalue(Function, 5) 
             local OldPlayerUtils = getupvalue(Function, 6)
             
-            setupvalue(Function, 1, {getAttr = function() return 0 end, setAttr = function() setupvalue(Function, 1, OldItemUtil) end})
+            setupvalue(Function, 1, {getAttr = function() return 0 end, setAttr = function() setupvalue(Function, 1, OldItemUtils) end})
             setupvalue(Function, 2, {ObjectLocal = function() setupvalue(Function, 2, OldAudio) end})
             setupvalue(Function, 3, {
                 GetPlayers = function() 
