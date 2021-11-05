@@ -12,7 +12,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local StartTime = tick()
 
-local ItemSystem = require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("ItemSystem"):WaitForChild("ItemSystem"))
+local Game = ReplicatedStorage:WaitForChild("Game")
+local ItemSystem = require(Game:WaitForChild("ItemSystem"):WaitForChild("ItemSystem"))
 local Network = getupvalue(ItemSystem.Init, 1)
 
 --// Localizations
@@ -75,31 +76,27 @@ ConstantMapping = {
     },
 
     SwitchTeam = {
-        ProtoIndex = 6,
+        ProtoIndex = 4,
         UpvalueIndex = 2,
-        LocatedFunction = require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("TeamChooseUI")).Show
+        LocatedFunction = require(Game:WaitForChild("TeamChooseUI")).Show
     },
 
     Punch = {
-        Constants = {"Punch", "Play"},
+        Constants = {"LoadAnimation", "GetLocalEquipped"},
         CustomArguments = {{Name = "Punch"}, true}, 
         CustomFix = function(Function)
             local Constants = getconstants(Function)
             
             for Index, Constant in next, Constants do 
                 if Constant == "Play" and getconstant(Function, Index - 1) == "LoadAnimation" then 
+                    ConstantMapping.Punch.ConstantIndex = Index
                     setconstant(Function, Index, "Stop")
+                    break
                 end
             end
         end,
         RevertFix = function(Function)
-            local Constants = getconstants(Function)
-
-            for Index, Constant in next, Constants do 
-                if Constant == "Stop" and getconstant(Function, Index - 1) == "LoadAnimation" then 
-                    setconstant(Function, Index, "Play")
-                end
-            end
+            setconstant(Function, ConstantMapping.Punch.ConstantIndex, "Play")
         end
     },
 
@@ -120,26 +117,6 @@ ConstantMapping = {
         end
     },
 
-    Flip = {
-        Constants = {"Punch", "Play"},
-        CustomArguments = {{Name = "Flip"}, true}, 
-        CustomFix = function(Function)
-            local Upvalues = getupvalues(Function) 
-
-            for Index, Value in next, Upvalues do 
-                if type(Value) == "table" and rawget(Value, "Window") then
-                    ConstantMapping.Flip.OldUpvalue = {Index = Index + 1, Value = getupvalue(Function, Index + 1)}
-                    setupvalue(Function, Index + 1, {})
-                end 
-            end 
-        end,
-        RevertFix = function(Function)
-            local OldUpvalue = ConstantMapping.Flip.OldUpvalue
-            
-            setupvalue(Function, OldUpvalue.Index, OldUpvalue.Value)
-        end
-    },
-
     Pickpocket = {
         Constants = {"ShouldArrest", "ShouldPickpocket"},
         UpvalueIndex = 2,
@@ -153,7 +130,7 @@ ConstantMapping = {
     },
 
     Damage = {
-        LocatedFunction = getproto(getproto(require(ReplicatedStorage.Game.MilitaryTurret.MilitaryTurretSystem).init, 1), 1),
+        LocatedFunction = getproto(getproto(require(Game:WaitForChild("MilitaryTurret"):WaitForChild("MilitaryTurretSystem")).init, 1), 1),
         UpvalueIndex = 1
     },
 
@@ -290,11 +267,9 @@ KeyGrabber = {
         end,
 
         HookFireServer = function(Function, UpvalueIndex, ConstantMap, ComparedConstants)
-            local OldNetwork = getupvalue(Function, UpvalueIndex)
-
             setupvalue(Function, UpvalueIndex, {
                 FireServer = function(self, Key)
-                    setupvalue(Function, UpvalueIndex, OldNetwork)
+                    setupvalue(Function, UpvalueIndex, Network)
 
                     if ConstantMap.RevertFix then 
                         ConstantMap.RevertFix(Function)
@@ -321,6 +296,16 @@ KeyGrabber = {
             if not Success then 
                 warn(("Failed to grab key for: %s\nError: %s"):format(KeyName or "Unknown", Error))
             end
+        end,
+        
+        ValidateProtoConstants = function(Constants)
+            for Index, Constant in next, Constants do 
+                if Constant == "FireServer" then 
+                    return true 
+                end 
+            end 
+            
+            return false
         end
     },
 
@@ -361,8 +346,12 @@ KeyGrabber = {
         ProtoScan = function(Value, ConstantMap, ComparedConstants)
             local Proto = getproto(Value, ConstantMap.ProtoIndex)
 
-            KeyGrabber.Utilities.HookFireServer(Proto, ConstantMap.UpvalueIndex, ConstantMap, ComparedConstants)
-            KeyGrabber.Utilities.PerformCall(Proto, ConstantMap, ComparedConstants)
+            if KeyGrabber.Utilities.ValidateProtoConstants(getconstants(Proto)) then
+                KeyGrabber.Utilities.HookFireServer(Proto, ConstantMap.UpvalueIndex, ConstantMap, ComparedConstants, ProtoNetwork)
+                KeyGrabber.Utilities.PerformCall(Proto, ConstantMap, ComparedConstants)
+            else 
+                warn(("Invalid proto fetched for key %s"):format(ComparedConstants))
+            end
         end
     }
 }
