@@ -4,18 +4,6 @@ if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
---// Init Variables
-
-local Keys = {}
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-local StartTime = tick()
-
-local Game = ReplicatedStorage:WaitForChild("Game")
-local ItemSystem = require(Game:WaitForChild("ItemSystem"):WaitForChild("ItemSystem"))
-local Network = getupvalue(ItemSystem.Init, 1)
-
 --// Localizations
 
 local getupvalue = getupvalue or debug.getupvalue 
@@ -36,6 +24,24 @@ local type = type
 local rawget = rawget
 local unpack = unpack
 
+local Keys = {}
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Game = ReplicatedStorage:WaitForChild("Game")
+local Players = game:GetService("Players")
+
+local Modules = {
+    MilitaryTurretSystem = require(Game:WaitForChild("MilitaryTurret"):WaitForChild("MilitaryTurretSystem")),
+    ItemSystem = require(Game:WaitForChild("ItemSystem"):WaitForChild("ItemSystem")),
+    Taser = require(Game:WaitForChild("Item"):WaitForChild("Taser")),
+    TeamChooseUI = require(Game:WaitForChild("TeamChooseUI"))
+}
+
+local StartTime = tick()
+local Network = getupvalue(Modules.ItemSystem.Init, 1)
+
+shared.OutputKeys = shared.OutputKeys == nil and true or shared.OutputKeys
+
 --// Function Identification and Fixes
 
 local ConstantMapping
@@ -47,14 +53,14 @@ ConstantMapping = {
     },
     
     BrodcastInputBegan = {
-        LocatedFunction = ItemSystem._equip,
+        LocatedFunction = Modules.ItemSystem._equip,
         ProtoIndex = 5,
         UpvalueIndex = 1,
         CustomArguments = {true, {}}
     },
     
     BrodcastInputEnded = {
-        LocatedFunction = ItemSystem._equip,
+        LocatedFunction = Modules.ItemSystem._equip,
         ProtoIndex = 6,
         UpvalueIndex = 1,
         CustomArguments = {true, {}}
@@ -78,7 +84,7 @@ ConstantMapping = {
     SwitchTeam = {
         ProtoIndex = 4,
         UpvalueIndex = 2,
-        LocatedFunction = require(Game:WaitForChild("TeamChooseUI")).Show
+        LocatedFunction = Modules.TeamChooseUI.Show
     },
 
     Punch = {
@@ -130,7 +136,7 @@ ConstantMapping = {
     },
 
     Damage = {
-        LocatedFunction = getproto(getproto(require(Game:WaitForChild("MilitaryTurret"):WaitForChild("MilitaryTurretSystem")).init, 1), 1),
+        LocatedFunction = getproto(getproto(Modules.MilitaryTurretSystem.init, 1), 1),
         UpvalueIndex = 1
     },
 
@@ -208,8 +214,8 @@ ConstantMapping = {
         CustomArguments = {
             {ItemData = {NextUse = 0}, CrossHair = {Flare = function() end, Spring = {Accelerate = function() end}}, Config = {Sound = {tazer_buzz = 0}, ReloadTime = 0, ReloadTimeHit = 0}, IgnoreList = {}, Draw = function() end, BroadcastInputBegan = function() end, UpdateMousePosition = function() end, Tip = Instance.new("Part"), Local = true, MousePosition = Vector3.new()}
         },
-        LocatedFunction = require(ReplicatedStorage:WaitForChild("Game"):WaitForChild("Item"):WaitForChild("Taser")).Tase,
-        UpvalueIndex = 4
+        LocatedFunction = Modules.Taser.Tase,
+        UpvalueIndex = 7
     },
 
     PopTire = {
