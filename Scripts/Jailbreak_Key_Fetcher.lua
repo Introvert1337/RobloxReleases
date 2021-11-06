@@ -244,19 +244,20 @@ KeyGrabber = {
             local Matches = {}
 
             for Index, ConstantMap in next, ConstantMapping do
-                if ConstantMap.Constants then
-                    local MapConstants = ConstantMap.Constants
-                    
+                local MapConstants = ConstantMap.Constants
+                
+                if MapConstants then
                     if tfind(Constants, MapConstants[1]) then 
                         local Amount = 1
+                        local MapConstantsAmount = #MapConstants
             
-                        for Index = 2, #MapConstants do 
+                        for Index = 2, MapConstantsAmount do 
                             if tfind(Constants, MapConstants[Index]) then 
                                 Amount = Amount + 1 
                             end 
                         end
             
-                        if Amount == #ConstantMap.Constants then 
+                        if Amount == MapConstantsAmount then 
                             tinsert(Matches, Index)
                         end
                     end
@@ -311,11 +312,13 @@ KeyGrabber = {
 
     GrabMethods = {
         UpvalueScan = function(Value, ConstantMap, ComparedConstants)
-            local UpvalueIndex = ConstantMap.UpvalueIndex or 1
+            local UpvalueIndex = ConstantMap.UpvalueIndex
 
-            for Index, Upvalue in next, getupvalues(Value) do 
-                if type(Upvalue) == "table" and rawget(Upvalue, "FireServer") then
-                    UpvalueIndex = Index
+            if not UpvalueIndex then
+                for Index, Upvalue in next, getupvalues(Value) do 
+                    if type(Upvalue) == "table" and rawget(Upvalue, "FireServer") then
+                        UpvalueIndex = Index
+                    end
                 end
             end
 
