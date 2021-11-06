@@ -15,6 +15,7 @@ local getconstants = getconstants or debug.getconstants
 local getproto = getproto or debug.getproto
 local islclosure = islclosure or is_l_closure
 local is_exploit_function = is_synapse_function or is_protosmasher_closure or checkclosure
+local rconsoleprint = rconsoleprint
 
 local tfind = table.find
 local tinsert = table.insert
@@ -24,23 +25,23 @@ local type = type
 local rawget = rawget
 local unpack = unpack
 
+--// Init Variables
+
 local Keys = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Game = ReplicatedStorage:WaitForChild("Game")
 local Players = game:GetService("Players")
+local GameFolder = ReplicatedStorage:WaitForChild("Game")
 
 local Modules = {
-    MilitaryTurretSystem = require(Game:WaitForChild("MilitaryTurret"):WaitForChild("MilitaryTurretSystem")),
-    ItemSystem = require(Game:WaitForChild("ItemSystem"):WaitForChild("ItemSystem")),
-    Taser = require(Game:WaitForChild("Item"):WaitForChild("Taser")),
-    TeamChooseUI = require(Game:WaitForChild("TeamChooseUI"))
+    MilitaryTurretSystem = require(GameFolder:WaitForChild("MilitaryTurret"):WaitForChild("MilitaryTurretSystem")),
+    ItemSystem = require(GameFolder:WaitForChild("ItemSystem"):WaitForChild("ItemSystem")),
+    Taser = require(GameFolder:WaitForChild("Item"):WaitForChild("Taser")),
+    TeamChooseUI = require(GameFolder:WaitForChild("TeamChooseUI"))
 }
 
 local StartTime = tick()
 local Network = getupvalue(Modules.ItemSystem.Init, 1)
-
-shared.OutputKeys = shared.OutputKeys == nil and true or shared.OutputKeys
 
 --// Function Identification and Fixes
 
@@ -93,7 +94,9 @@ ConstantMapping = {
         CustomFix = function(Function)
             local Constants = getconstants(Function)
             
-            for Index, Constant in next, Constants do 
+            for Index = 1, #Constants do 
+                local Constant = Constants[Index]
+                
                 if Constant == "Play" and getconstant(Function, Index - 1) == "LoadAnimation" then 
                     ConstantMapping.Punch.ConstantIndex = Index
                     setconstant(Function, Index, "Stop")
@@ -306,8 +309,8 @@ KeyGrabber = {
         end,
         
         ValidateProtoConstants = function(Constants)
-            for Index, Constant in next, Constants do 
-                if Constant == "FireServer" then 
+            for Index = 1, #Constants do 
+                if Constants[Index] == "FireServer" then 
                     return true 
                 end 
             end 
@@ -321,7 +324,11 @@ KeyGrabber = {
             local UpvalueIndex = ConstantMap.UpvalueIndex
 
             if not UpvalueIndex then
-                for Index, Upvalue in next, getupvalues(Value) do 
+                local Upvalues = getupvalues(Value)
+
+                for Index = 1, #Upvalues do 
+                    local Upvalue = Upvalues[Index]
+
                     if type(Upvalue) == "table" and rawget(Upvalue, "FireServer") then
                         UpvalueIndex = Index
                     end
@@ -336,12 +343,19 @@ KeyGrabber = {
             local Upvalue = getupvalues(Value)[ConstantMap.UpvalueIndex]
 
             if type(Upvalue) == "function" then
-                for Index, SecondUpvalue in next, getupvalues(Upvalue) do
+                local Upvalues = getupvalues(Upvalue)
+
+                for Index = 1, #Upvalues do
+                    local SecondUpvalue = Upvalues[Index]
+
                     if type(SecondUpvalue) == "table" and rawget(SecondUpvalue, "FireServer") then 
                         KeyGrabber.Utilities.HookFireServer(Upvalue, Index, ConstantMap, ComparedConstants)
                         KeyGrabber.Utilities.PerformCall(Upvalue, ConstantMap, ComparedConstants)
                     elseif type(SecondUpvalue) == "function" then 
-                        for SecondIndex, ThirdUpvalue in next, getupvalues(SecondUpvalue) do
+                        local Upvalues = getupvalues(SecondUpvalue)
+                        for SecondIndex = 1, #Upvalues do
+                            local ThirdUpvalue = Upvalues[SecondIndex]
+
                             if type(ThirdUpvalue) == "table" and rawget(ThirdUpvalue, "FireServer") then 
                                 KeyGrabber.Utilities.HookFireServer(SecondUpvalue, SecondIndex, ConstantMap, ComparedConstants)
                                 KeyGrabber.Utilities.PerformCall(SecondUpvalue, ConstantMap, ComparedConstants)
@@ -409,7 +423,7 @@ end
 
 --// Output Keys
 
-if shared.OutputKeys then
+if shared.OutputKeys ~= false then -- this is to make it output if shared.OutputKeys isn't explicitly set to false
     rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - StartTime))
     
     for Index, Key in next, Keys do 
