@@ -94,9 +94,7 @@ ConstantMapping = {
         CustomFix = function(Function)
             local Constants = getconstants(Function)
             
-            for Index = 1, #Constants do 
-                local Constant = Constants[Index]
-                
+            for Index, Constant in next, Constants do 
                 if Constant == "Play" and getconstant(Function, Index - 1) == "LoadAnimation" then 
                     ConstantMapping.Punch.ConstantIndex = Index
                     setconstant(Function, Index, "Stop")
@@ -112,7 +110,7 @@ ConstantMapping = {
     EnterCar = {
         Constants = {"ShouldHotwire", "ShouldEject", "Vehicle"},
         UpvalueIndex = 3,
-        CustomArguments = {{}}
+        CustomArguments = {{}},
     },
 
     ExitCar = {
@@ -295,22 +293,22 @@ KeyGrabber = {
                 if ConstantMap.CustomFix then 
                     ConstantMap.CustomFix(Function)
                 end
-
+                
                 if ConstantMap.CustomArguments then
                     Function(unpack(ConstantMap.CustomArguments))
                 else 
                     Function()
                 end
             end)
-            
+
             if not Success then 
                 warn(("Failed to grab key for: %s\nError: %s"):format(KeyName or "Unknown", Error))
             end
         end,
         
         ValidateProtoConstants = function(Constants)
-            for Index = 1, #Constants do 
-                if Constants[Index] == "FireServer" then 
+            for Index, Constant in next, Constants do 
+                if Constant == "FireServer" then 
                     return true 
                 end 
             end 
@@ -324,17 +322,13 @@ KeyGrabber = {
             local UpvalueIndex = ConstantMap.UpvalueIndex
 
             if not UpvalueIndex then
-                local Upvalues = getupvalues(Value)
-
-                for Index = 1, #Upvalues do 
-                    local Upvalue = Upvalues[Index]
-
+                for Index, Upvalue in next, getupvalues(Value) do 
                     if type(Upvalue) == "table" and rawget(Upvalue, "FireServer") then
                         UpvalueIndex = Index
                     end
                 end
             end
-
+ 
             KeyGrabber.Utilities.HookFireServer(Value, UpvalueIndex, ConstantMap, ComparedConstants)
             KeyGrabber.Utilities.PerformCall(Value, ConstantMap, ComparedConstants)
         end,
@@ -343,19 +337,12 @@ KeyGrabber = {
             local Upvalue = getupvalues(Value)[ConstantMap.UpvalueIndex]
 
             if type(Upvalue) == "function" then
-                local Upvalues = getupvalues(Upvalue)
-
-                for Index = 1, #Upvalues do
-                    local SecondUpvalue = Upvalues[Index]
-
+                for Index, SecondUpvalue in next, getupvalues(Upvalue) do
                     if type(SecondUpvalue) == "table" and rawget(SecondUpvalue, "FireServer") then 
                         KeyGrabber.Utilities.HookFireServer(Upvalue, Index, ConstantMap, ComparedConstants)
                         KeyGrabber.Utilities.PerformCall(Upvalue, ConstantMap, ComparedConstants)
                     elseif type(SecondUpvalue) == "function" then 
-                        local Upvalues = getupvalues(SecondUpvalue)
-                        for SecondIndex = 1, #Upvalues do
-                            local ThirdUpvalue = Upvalues[SecondIndex]
-
+                        for SecondIndex, ThirdUpvalue in next, getupvalues(SecondUpvalue) do
                             if type(ThirdUpvalue) == "table" and rawget(ThirdUpvalue, "FireServer") then 
                                 KeyGrabber.Utilities.HookFireServer(SecondUpvalue, SecondIndex, ConstantMap, ComparedConstants)
                                 KeyGrabber.Utilities.PerformCall(SecondUpvalue, ConstantMap, ComparedConstants)
@@ -438,6 +425,14 @@ if shared.AddToEnv then
     
     Environment.Keys = Keys
     Environment.Network = Network
+end
+
+--// Check for Errors 
+
+for Index, Value in next, ConstantMapping do 
+    if not Keys[Index] then 
+        rconsoleerr(("Failed to fetch key %s"):format(Index))
+    end
 end
 
 --// Return Keys and Network
