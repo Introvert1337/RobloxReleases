@@ -248,7 +248,7 @@ do
     end;
 
     do -- falldamage
-        local connection = getconnections(getupvalue(require(game.ReplicatedStorage.Game.Falling).Init, 3).Button.MouseButton1Down)[1].Function;
+        local connection = getconnections(getupvalue(require(dependencies.game_folder.Falling).Init, 3).Button.MouseButton1Down)[1].Function;
         local fall_function = getupvalue(getupvalue(getupvalue(connection, 1), 4), 3);
 
         functions.mark_function(fall_function, "FallDamage");
