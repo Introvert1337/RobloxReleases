@@ -1,440 +1,330 @@
 --// Game Loaded
 
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
+do 
+    if not game:IsLoaded() then 
+        game.Loaded:Wait();
+    end;
+end;
 
---// Localizations
+--// Services 
 
-local getupvalue = getupvalue or debug.getupvalue 
+local replicated_storage = game:GetService("ReplicatedStorage");
+local players = game:GetService("Players");
+local collection_service = game:GetService("CollectionService");
+
+--// Localizations 
+
+local getupvalue = getupvalue or debug.getupvalue
 local setupvalue = setupvalue or debug.setupvalue
 local getupvalues = getupvalues or debug.getupvalues
-local getconstant = getconstant or debug.getconstant
 local setconstant = setconstant or debug.setconstant
 local getconstants = getconstants or debug.getconstants
+local getinfo = getinfo or debug.getinfo
 local getproto = getproto or debug.getproto
-local islclosure = islclosure or is_l_closure
-local is_exploit_function = is_synapse_function or is_protosmasher_closure or checkclosure
-local rconsoleprint = rconsoleprint
-
-local tfind = table.find
-local tinsert = table.insert
+local checkcaller = checkcaller
+local getconnections = getconnections
+local islclosure = islclosure
 
 local require = require
-local type = type 
-local rawget = rawget
-local unpack = unpack
+local t_find = table.find
+local v3_new = Vector3.new
 
---// Init Variables
+--// Init Variables 
 
-local Keys = {}
+local dependencies = {
+    network = getupvalue(require(replicated_storage.Module.AlexChassis).SetEvent, 1);
+    game_folder = replicated_storage.Game;
+    marked_functions = {};
+    network_keys = {};
+    start_time = tick();
+    keys_list = {"Punch", "Hijack", "Kick", "CarKick", "FallDamage", "PopTire", "SwitchTeam", "BroadcastInputBegan", "BroadcastInputEnded", "Arrest", "Eject", "EnterCar", "ExitCar", "SwitchTeam", "PlaySound"}
+};
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-local GameFolder = ReplicatedStorage:WaitForChild("Game")
+local functions = {
+    mark_function = function(func, name)
+        dependencies.marked_functions[func] = {name = name};
+    end;
 
-local Modules = {
-    MilitaryTurretSystem = require(GameFolder:WaitForChild("MilitaryTurret"):WaitForChild("MilitaryTurretSystem")),
-    ItemSystem = require(GameFolder:WaitForChild("ItemSystem"):WaitForChild("ItemSystem")),
-    Taser = require(GameFolder:WaitForChild("Item"):WaitForChild("Taser")),
-    TeamChooseUI = require(GameFolder:WaitForChild("TeamChooseUI"))
-}
+    hook_fire_server = function(func, index, name)
+        setupvalue(func, index, {
+            FireServer = function(self, key)
+                dependencies.network_keys[name] = key;
+            end;
+        });
+    end;
+};
 
-local StartTime = tick()
-local Network = getupvalue(Modules.ItemSystem.Init, 1)
+--// Network Hook (credit to senser for the "marking" method)
 
---// Function Identification and Fixes
+local old_fire_server = getupvalue(dependencies.network.FireServer, 1);
 
-local ConstantMapping
-ConstantMapping = {
-    CarKick = {
-        Constants = {"Eject", "MouseButton1Down"},
-        UpvalueIndex = 1,
-        ProtoIndex = 1
-    },
-    
-    BrodcastInputBegan = {
-        LocatedFunction = Modules.ItemSystem._equip,
-        ProtoIndex = 5,
-        UpvalueIndex = 1,
-        CustomArguments = {true, {}}
-    },
-    
-    BrodcastInputEnded = {
-        LocatedFunction = Modules.ItemSystem._equip,
-        ProtoIndex = 6,
-        UpvalueIndex = 1,
-        CustomArguments = {true, {}}
-    },
-
-    PlaySound = {
-        Constants = {"Source", "Play", "FireServer"},
-        CustomArguments = {"", {Source = true}, false}
-    },
-
-    Eject = {
-        Constants = {"ShouldEject", "Vehicle"},
-        UpvalueIndex = 2,
-    },
-
-    Hijack = {
-        Constants = {"ShouldEject", "Vehicle"},
-        UpvalueIndex = 1,
-    },
-
-    SwitchTeam = {
-        ProtoIndex = 4,
-        UpvalueIndex = 2,
-        LocatedFunction = Modules.TeamChooseUI.Show
-    },
-
-    Punch = {
-        Constants = {"LoadAnimation", "GetLocalEquipped"},
-        CustomArguments = {{Name = "Punch"}, true}, 
-        CustomFix = function(Function)
-            local Constants = getconstants(Function)
+do 
+    setupvalue(dependencies.network.FireServer, 1, function(key, ...)
+        local caller_info = getinfo(2, "f");
             
-            for Index, Constant in next, Constants do 
-                if Constant == "Play" and getconstant(Function, Index - 1) == "LoadAnimation" then 
-                    ConstantMapping.Punch.ConstantIndex = Index
-                    setconstant(Function, Index, "Stop")
-                    break
-                end
-            end
-        end,
-        RevertFix = function(Function)
-            setconstant(Function, ConstantMapping.Punch.ConstantIndex, "Play")
-        end
-    },
+        if caller_info.func == dependencies.network.FireServer then 
+            caller_info = getinfo(3, "f");
+        end;
 
-    EnterCar = {
-        Constants = {"ShouldHotwire", "ShouldEject", "Vehicle"},
-        UpvalueIndex = 3,
-        CustomArguments = {{}},
-    },
+        local mark_info = dependencies.marked_functions[caller_info.func];
 
-    ExitCar = {
-        Constants = {"OnVehicleJumpExited", "FireServer", "LastVehicleExit"},
-        CustomFix = function(Function)
-            ConstantMapping.ExitCar.OldUpvalue = getupvalue(Function, 1)
-            setupvalue(Function, 1, {})
-        end,
-        RevertFix = function(Function)
-            setupvalue(Function, 1, ConstantMapping.ExitCar.OldUpvalue)
-        end
-    },
+        if caller_info and mark_info and checkcaller() then 
+            dependencies.network_keys[mark_info.name] = key;
+            dependencies.marked_functions[caller_info.func] = nil;
 
-    Pickpocket = {
-        Constants = {"ShouldArrest", "ShouldPickpocket"},
-        UpvalueIndex = 2,
-        CustomArguments = {{Name = ""}}
-    },
+            return;
+        end;
 
-    Arrest = {
-        Constants = {"ShouldArrest", "ShouldPickpocket"},
-        UpvalueIndex = 1,
-        CustomArguments = {{Name = ""}}
-    },
+        return old_fire_server(key, ...);
+    end);
+end;
 
-    Damage = {
-        LocatedFunction = getproto(getproto(Modules.MilitaryTurretSystem.init, 1), 1),
-        UpvalueIndex = 1
-    },
+--// Key Fetching 
 
-    FallDamage = {
-        Constants = {"NoFallDamage", "NoRagdoll"},
-        CustomArguments = {0},
-        CustomFix = function(Function)
-            ConstantMapping.Damage.OldUpvalues = getupvalues(Function)
-
-            setupvalue(Function, 1, true)
-            setupvalue(Function, 3, function() end)
-            setupvalue(Function, 4, function() end)
-            setupvalue(Function, 5, 25)
-            setupvalue(Function, 6, true)
-        end,
-        RevertFix = function(Function)
-            local OldUpvalues = ConstantMapping.Damage.OldUpvalues
-
-            for Index = 1, 6 do
-                if Index ~= 2 then
-                    setupvalue(Function, Index, OldUpvalues[Index])
-                end
-            end
-        end
-    },
-
-    Kick = {
-        Constants = {"FailedPcall"},
-        CustomGrab = function(Function)
-            local OldEnv = getfenv(Function)
-
-            setfenv(Function, {pcall = function() return false end})
-
-            local OldKickFunction = getupvalue(Function, 3)
-
-            setupvalue(Function, 3, function(Key)
-                setupvalue(Function, 3, OldKickFunction)
-                Keys["Kick"] = Key
-            end)
-            
-            Function()
-
-            setfenv(Function, OldEnv)
-        end
-    },
-
-    Taze = {
-        CustomFix = function(Function)
-            local OldItemUtils = getupvalue(Function, 1)
-            local OldAudio = getupvalue(Function, 2)
-            local OldCasting = getupvalue(Function, 5) 
-            local OldPlayerUtils = getupvalue(Function, 6)
-            
-            setupvalue(Function, 1, {getAttr = function() return 0 end, setAttr = function() setupvalue(Function, 1, OldItemUtils) end})
-            setupvalue(Function, 2, {ObjectLocal = function() setupvalue(Function, 2, OldAudio) end})
-            setupvalue(Function, 3, {
-                GetPlayers = function() 
-                    setupvalue(Function, 3, Players)
-                    return {}
-                end
-            })
-            setupvalue(Function, 5, {
-                RayIgnoreNonCollideWithIgnoreList = function() 
-                    setupvalue(Function, 5, OldCasting)     
-                    return true
-                end
-            })
-            setupvalue(Function, 6, {
-                getPlayerFromDescendant = function() 
-                    setupvalue(Function, 6, OldPlayerUtils)
-                    return {Name = ""}
-                end
-            })
-        end,
-        CustomArguments = {
-            {ItemData = {NextUse = 0}, CrossHair = {Flare = function() end, Spring = {Accelerate = function() end}}, Config = {Sound = {tazer_buzz = 0}, ReloadTime = 0, ReloadTimeHit = 0}, IgnoreList = {}, Draw = function() end, BroadcastInputBegan = function() end, UpdateMousePosition = function() end, Tip = Instance.new("Part"), Local = true, MousePosition = Vector3.new()}
-        },
-        LocatedFunction = Modules.Taser.Tase,
-        UpvalueIndex = 7
-    },
-
-    PopTire = {
-        Constants = {"LastImpactSound", "LastImpact", "OnHitSurface"},
-        ProtoIndex = 2,
-        UpvalueIndex = 7,
-        CustomArguments = {{Color = Color3.new(0, 0, 0), IsDescendantOf = function(self, obj) return obj.Name == "ShootingRange" end}, Vector3.new(), Vector3.new(), 0},
-        CustomFix = function(Function)
-            ConstantMapping.PopTire.OldUpvalues = getupvalues(Function)
-            
-            setupvalue(Function, 1, {Weld = function() end})
-            setupvalue(Function, 2, {Local = false, LastImpactSound = 0, LastImpact = 0.2})
-            setupvalue(Function, 5, ReplicatedStorage)
-            setupvalue(Function, 6, {AddItem = function() getupvalue(Function, 2).Local = true end})
-        end,
-        RevertFix = function(Function)
-            local OldUpvalues = ConstantMapping.PopTire.OldUpvalues
-            
-            setupvalue(Function, 1, OldUpvalues[1])
-            setupvalue(Function, 2, OldUpvalues[2])
-            setupvalue(Function, 6, game:GetService("Debris"))
-        end
-    }
-}
-
---// Main Key Grabbing Functions
-
-local KeyGrabber
-KeyGrabber = {
-    Utilities = {
-        CompareConstants = function(Constants)
-            local Matches = {}
-
-            for Index, ConstantMap in next, ConstantMapping do
-                local MapConstants = ConstantMap.Constants
-                
-                if MapConstants then
-                    if tfind(Constants, MapConstants[1]) then 
-                        local Amount = 1
-                        local MapConstantsAmount = #MapConstants
-            
-                        for Index = 2, MapConstantsAmount do 
-                            if tfind(Constants, MapConstants[Index]) then 
-                                Amount = Amount + 1 
-                            end 
-                        end
-            
-                        if Amount == MapConstantsAmount then 
-                            tinsert(Matches, Index)
-                        end
-                    end
-                end
-            end
-            
-            return #Matches > 0 and Matches or false
-        end,
-
-        HookFireServer = function(Function, UpvalueIndex, ConstantMap, ComparedConstants)
-            setupvalue(Function, UpvalueIndex, {
-                FireServer = function(self, Key)
-                    setupvalue(Function, UpvalueIndex, Network)
-
-                    if ConstantMap.RevertFix then 
-                        ConstantMap.RevertFix(Function)
-                    end
-                    
-                    Keys[ComparedConstants] = Key
-                end
-            })
-        end,
-
-        PerformCall = function(Function, ConstantMap, KeyName)
-            local Success, Error = pcall(function()
-                if ConstantMap.CustomFix then 
-                    ConstantMap.CustomFix(Function)
-                end
-                
-                if ConstantMap.CustomArguments then
-                    Function(unpack(ConstantMap.CustomArguments))
-                else 
-                    Function()
-                end
-            end)
-
-            if not Success then 
-                warn(("Failed to grab key for: %s\nError: %s"):format(KeyName or "Unknown", Error))
-            end
-        end,
+do 
+    do -- punch
+        local punch_function = getupvalue(require(dependencies.game_folder.DefaultActions).punchButton.onPressed, 1).attemptPunch;
         
-        ValidateProtoConstants = function(Constants)
-            for Index, Constant in next, Constants do 
-                if Constant == "FireServer" then 
-                    return true 
-                end 
-            end 
+        functions.mark_function(punch_function, "Punch");
+
+        setupvalue(punch_function, 1, 0);
+
+        local constants = getconstants(punch_function);
             
-            return false
-        end
-    },
+        for index, constant in next, constants do 
+            if constant == "Play" and constants[index - 1] == "LoadAnimation" then 
+                setconstant(punch_function, index, "Stop");
+                punch_function();
+                setconstant(punch_function, index, "Play");
 
-    GrabMethods = {
-        UpvalueScan = function(Value, ConstantMap, ComparedConstants)
-            local UpvalueIndex = ConstantMap.UpvalueIndex
+                break;
+            end;
+        end;
+    end;
 
-            if not UpvalueIndex then
-                for Index, Upvalue in next, getupvalues(Value) do 
-                    if type(Upvalue) == "table" and rawget(Upvalue, "FireServer") then
-                        UpvalueIndex = Index
-                    end
-                end
-            end
- 
-            KeyGrabber.Utilities.HookFireServer(Value, UpvalueIndex, ConstantMap, ComparedConstants)
-            KeyGrabber.Utilities.PerformCall(Value, ConstantMap, ComparedConstants)
-        end,
+    do -- kick / carkick
+        local connection = getconnections(collection_service:GetInstanceRemovedSignal("Door"))[1].Function;
+        local functions_table = getupvalue(getupvalue(getupvalue(getupvalue(connection, 2), 2).Run, 1), 1);
 
-        NestedUpvalueScan = function(Value, ConstantMap, ComparedConstants)
-            local Upvalue = getupvalues(Value)[ConstantMap.UpvalueIndex]
+        local car_kick_function = getproto(functions_table[3].c, 1);
+        local kick_function = functions_table[4].c;
 
-            if type(Upvalue) == "function" then
-                for Index, SecondUpvalue in next, getupvalues(Upvalue) do
-                    if type(SecondUpvalue) == "table" and rawget(SecondUpvalue, "FireServer") then 
-                        KeyGrabber.Utilities.HookFireServer(Upvalue, Index, ConstantMap, ComparedConstants)
-                        KeyGrabber.Utilities.PerformCall(Upvalue, ConstantMap, ComparedConstants)
-                    elseif type(SecondUpvalue) == "function" then 
-                        for SecondIndex, ThirdUpvalue in next, getupvalues(SecondUpvalue) do
-                            if type(ThirdUpvalue) == "table" and rawget(ThirdUpvalue, "FireServer") then 
-                                KeyGrabber.Utilities.HookFireServer(SecondUpvalue, SecondIndex, ConstantMap, ComparedConstants)
-                                KeyGrabber.Utilities.PerformCall(SecondUpvalue, ConstantMap, ComparedConstants)
-                            end
-                        end
-                    end
-                end
-            end
-        end,
-
-        ProtoScan = function(Value, ConstantMap, ComparedConstants)
-            local Proto = getproto(Value, ConstantMap.ProtoIndex)
-
-            if KeyGrabber.Utilities.ValidateProtoConstants(getconstants(Proto)) then
-                KeyGrabber.Utilities.HookFireServer(Proto, ConstantMap.UpvalueIndex, ConstantMap, ComparedConstants, ProtoNetwork)
-                KeyGrabber.Utilities.PerformCall(Proto, ConstantMap, ComparedConstants)
-            else 
-                warn(("Invalid proto fetched for key %s"):format(ComparedConstants))
-            end
-        end
-    }
-}
-
---// Grab Keys With Pre-Located Functions
-
-for Index, ConstantMap in next, ConstantMapping do 
-    local LocatedFunction = ConstantMap.LocatedFunction 
-
-    if LocatedFunction then
-        if ConstantMap.ProtoIndex then
-            KeyGrabber.GrabMethods.ProtoScan(LocatedFunction, ConstantMap, Index)
-        else 
-            KeyGrabber.GrabMethods.UpvalueScan(LocatedFunction, ConstantMap, Index)
-        end
-    end
-end
-
--- Main GC Loop to Grab Keys From Non-Located Functions
-
-local GarbageCollection = getgc()
-
-for Index = 1, #GarbageCollection do  
-    local Value = GarbageCollection[Index]
-    
-    if islclosure(Value) and not is_exploit_function(Value) then 
-        local ComparedConstants = KeyGrabber.Utilities.CompareConstants(getconstants(Value))
+        do -- kick
+            functions.mark_function(kick_function, "Kick");
         
-        if ComparedConstants then 
-            for Index, ComparedName in next, ComparedConstants do
-                local ConstantMap = ConstantMapping[ComparedName]
+            local old_environment = getfenv(kick_function);
 
-                if ConstantMap.CustomGrab then -- Custom Method
-                    ConstantMap.CustomGrab(Value)
-                elseif not ConstantMap.ProtoIndex and not ConstantMap.UpvalueIndex then -- Method 1
-                    KeyGrabber.GrabMethods.UpvalueScan(Value, ConstantMap, ComparedName)
-                elseif not ConstantMap.ProtoIndex and ConstantMap.UpvalueIndex then -- Method 2
-                    KeyGrabber.GrabMethods.NestedUpvalueScan(Value, ConstantMap, ComparedName)
-                elseif ConstantMap.ProtoIndex then -- Method 3
-                    KeyGrabber.GrabMethods.ProtoScan(Value, ConstantMap, ComparedName)
-                end 
-            end
-        end
-    end 
-end
+            setfenv(kick_function, {
+                pcall = function() return false end;
+            });
+        
+            kick_function();
+        
+            setupvalue(kick_function, 2, false);
+            setfenv(kick_function, old_environment);
+        end;
 
---// Output Keys
+        do -- carkick
+            functions.hook_fire_server(car_kick_function, 1, "CarKick");
 
-if shared.OutputKeys ~= false then -- this is to make it output if shared.OutputKeys isn't explicitly set to false
-    rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - StartTime))
+            car_kick_function()
+        end;
+    end;
+
+    do -- damage
+        local damage_function = getproto(getproto(require(dependencies.game_folder.MilitaryTurret.MilitaryTurretSystem).init, 1), 1);
+
+        functions.hook_fire_server(damage_function, 1, "Damage");
+
+        damage_function();
+    end;
+
+    do -- switchteam
+        local switch_team_function = getproto(require(dependencies.game_folder.TeamChooseUI).Show, 4);
+
+        functions.hook_fire_server(switch_team_function, 2, "SwitchTeam");
+
+        switch_team_function();
+    end;
+
+    do -- broadcastinputbegan / broadcastinputended
+        local equip_function = require(dependencies.game_folder.ItemSystem.ItemSystem)._equip;
+        local input_began_function = getproto(equip_function, 5);
+        local input_ended_function = getproto(equip_function, 6);
+
+        functions.hook_fire_server(input_began_function, 1, "BroadcastInputBegan");
+        functions.hook_fire_server(input_ended_function, 1, "BroadcastInputEnded");
+
+        input_began_function(true, {});
+        input_ended_function(true, {});
+    end;
+
+    do -- taze
+        local taze_function = require(dependencies.game_folder.Item.Taser).Tase;
+        local old_upvalues = getupvalues(taze_function);
+
+        functions.mark_function(taze_function, "Taze");
+
+        setupvalue(taze_function, 1, {getAttr = function() return 0 end, setAttr = function() setupvalue(taze_function, 1, old_upvalues[1]) end});
+        setupvalue(taze_function, 2, {ObjectLocal = function() setupvalue(taze_function, 2, old_upvalues[2]) end});
+        setupvalue(taze_function, 3, {GetPlayers = function() setupvalue(taze_function, 3, players) return {} end});
+        setupvalue(taze_function, 5, {RayIgnoreNonCollideWithIgnoreList = function() setupvalue(taze_function, 5, old_upvalues[5]) return true end});
+        setupvalue(taze_function, 6, {getPlayerFromDescendant = function() setupvalue(taze_function, 6, old_upvalues[6]) return {Name = ""} end});
+
+        taze_function({
+            ItemData = {NextUse = 0}, CrossHair = {Flare = function() end, Spring = {Accelerate = function() end}}, 
+            Config = {Sound = {tazer_buzz = 0}, ReloadTime = 0, ReloadTimeHit = 0}, IgnoreList = {}, Draw = function() end, BroadcastInputBegan = function() end, 
+            UpdateMousePosition = function() end, Tip = {Position = v3_new(0, 0, 0)}, Local = true, MousePosition = v3_new(0, 0, 0)
+        });
+    end;
+
+    do -- playsound 
+        for index, connection in next, getconnections(game:GetService("RunService").Heartbeat) do 
+            local connection_function = connection.Function;
+            
+            if type(connection_function) == "function" and t_find(getconstants(connection_function), "Vehicle Heartbeat") then 
+                for index, upvalue in next, getupvalues(connection_function) do 
+                    if type(upvalue) == "function" and islclosure(upvalue) and t_find(getconstants(upvalue), "NitroLoop") then 
+                        local play_sound_function = getupvalue(upvalue, 1);
+                        functions.mark_function(play_sound_function, "PlaySound");
+
+                        local old_upvalue = getupvalue(play_sound_function, 2);
+                        setupvalue(play_sound_function, 2, setmetatable({}, {__index = function() setupvalue(play_sound_function, 2, old_upvalue) return function() end end}));
+
+                        play_sound_function(nil, nil);
+                    end;
+                end;
+            end;
+        end;
+    end;
+
+    do -- eject / hijack / entercar
+        local connection = getconnections(collection_service:GetInstanceAddedSignal("VehicleSeat"))[1].Function;
+        local seat_interact_function = getupvalue(connection, 1);
+
+        local hijack_function = getupvalue(seat_interact_function, 1);
+        local eject_function = getupvalue(seat_interact_function, 2);
+        local enter_car_function = getupvalue(seat_interact_function, 3);
+
+        functions.mark_function(hijack_function, "Hijack");
+        functions.mark_function(eject_function, "Eject");
+        functions.mark_function(enter_car_function, "EnterCar");
+
+        hijack_function()
+        eject_function()
+
+        local old_upvalue = getupvalue(enter_car_function, 1);
+        setupvalue(enter_car_function, 1, nil);
+
+        enter_car_function({});
+
+        setupvalue(enter_car_function, 1, old_upvalue);
+    end;
+
+    do -- poptire
+        local bullet_function = getproto(require(dependencies.game_folder.Item.Gun).SetupBulletEmitter, 2);
+
+        setupvalue(bullet_function, 1, {Weld = function() end});
+        setupvalue(bullet_function, 2, {Local = false, LastImpactSound = 0, LastImpact = 0.2});
+        setupvalue(bullet_function, 5, replicated_storage);
+        setupvalue(bullet_function, 6, {AddItem = function() getupvalue(bullet_function, 2).Local = true end});
+
+        functions.hook_fire_server(bullet_function, 7, "PopTire");
+
+        bullet_function({Color = Color3.new(0, 0, 0), IsDescendantOf = function(self, obj) return obj.Name == "ShootingRange" end}, v3_new(0, 0, 0), v3_new(0, 0, 0), 0);
+    end;
+
+    do -- pickpocket / arrest
+        local connection = getconnections(collection_service:GetInstanceAddedSignal("Character"))[1].Function;
+        local interact_function = getupvalue(connection, 2);
+        local pickpocket_function = getupvalue(getupvalue(interact_function, 2), 2);
+        local arrest_function = getupvalue(getupvalue(interact_function, 1), 7);
+
+        functions.mark_function(pickpocket_function, "Pickpocket");
+        functions.mark_function(arrest_function, "Arrest");
+
+        pickpocket_function({});
+        arrest_function({});
+    end;
+
+    do -- falldamage
+        local connection = getconnections(getupvalue(require(game.ReplicatedStorage.Game.Falling).Init, 3).Button.MouseButton1Down)[1].Function;
+        local fall_function = getupvalue(getupvalue(getupvalue(connection, 1), 4), 3);
+
+        functions.mark_function(fall_function, "FallDamage");
+
+        local old_upvalues = getupvalues(fall_function);
+
+        setupvalue(fall_function, 1, true);
+        setupvalue(fall_function, 3, function() end);
+        setupvalue(fall_function, 4, function() end);
+        setupvalue(fall_function, 5, 25);
+        setupvalue(fall_function, 6, true);
+
+        fall_function(0);
+
+        for index = 1, 6 do 
+            if index ~= 2 then 
+                setupvalue(fall_function, index, old_upvalues[index]);
+            end;
+        end;
+    end;
+
+    do -- exitcar
+        local exit_car_function = getupvalue(require(dependencies.game_folder.TeamChooseUI).Init, 3);
+
+        functions.mark_function(exit_car_function, "ExitCar");
+
+        local old_upvalues = getupvalues(exit_car_function);
+
+        setupvalue(exit_car_function, 1, true);
+        setupvalue(exit_car_function, 2, {OnVehicleJumpExited = {Fire = function() setupvalue(exit_car_function, 2, old_upvalues[2]) end}});
+        setupvalue(exit_car_function, 6, {Heli = {}});
+
+        exit_car_function();
+
+        setupvalue(exit_car_function, 1, old_upvalues[1]);
+        setupvalue(exit_car_function, 6, old_upvalues[6]);
+    end;
+end;
+
+--// Reset Network
+
+do
+    setupvalue(dependencies.network.FireServer, 1, old_fire_server);
+end;
+
+--// Output Keys 
+
+do
+    if shared.output_keys ~= false then
+        rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - dependencies.start_time));
+        
+        for index, key in next, dependencies.network_keys do 
+            rconsoleprint(("%s : %s\n"):format(index, key));
+        end;
+    end;
+end;
+
+--// Add Keys to Environment 
+
+do 
+    if shared.add_to_env then 
+        local environment = getgenv();
     
-    for Index, Key in next, Keys do 
-        rconsoleprint(("%s : %s\n"):format(Index, Key))
-    end
-end
+        environment.keys = dependencies.network_keys;
+        environment.network = dependencies.network;
+    end;
+end;
 
---// Add Keys and Network to Global Environment
+--// Check for Missing Keys 
 
-if shared.AddToEnv then
-    local Environment = getgenv()
-    
-    Environment.Keys = Keys
-    Environment.Network = Network
-end
+do 
+    for index, key_name in next, dependencies.keys_list do 
+        if not dependencies.network_keys[key_name] then 
+            rconsoleerr(("Failed to fetch key %s"):format(key_name));
+        end;
+    end;
+end;
 
---// Check for Errors 
-
-for Index, Value in next, ConstantMapping do 
-    if not Keys[Index] then 
-        rconsoleerr(("Failed to fetch key %s"):format(Index))
-    end
-end
-
---// Return Keys and Network
-
-return Keys, Network
+return dependencies.network_keys, dependencies.network;
