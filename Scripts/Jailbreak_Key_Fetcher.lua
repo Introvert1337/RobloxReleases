@@ -37,7 +37,7 @@ local dependencies = {
     marked_functions = {};
     network_keys = {};
     start_time = tick();
-    keys_list = {"Punch", "Hijack", "Kick", "CarKick", "FallDamage", "PopTire", "SwitchTeam", "BroadcastInputBegan", "BroadcastInputEnded", "Arrest", "Eject", "EnterCar", "ExitCar", "SwitchTeam", "PlaySound"}
+    keys_list = {"Punch", "Hijack", "Kick", "CarKick", "FallDamage", "PopTire", "SwitchTeam", "BroadcastInputBegan", "BroadcastInputEnded", "Arrest", "Eject", "EnterCar", "ExitCar", "SwitchTeam", "PlaySound"};
 };
 
 local functions = {
