@@ -30,7 +30,7 @@ replaceclosure(syn.request, function(data)
     end;
         
     warn("unknown url");
-    return {};
+    return coroutine.yield();
 end);
 
 return loadfile(isfile(script_paths.placeid) and script_paths.placeid or isfile(script_paths.gameid) and script_paths.placeid or script_paths.universal)();
