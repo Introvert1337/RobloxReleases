@@ -1,4 +1,5 @@
 -- cracked 11/11/2021 due to linkvertise use (which is stupid)
+-- this isn't a crack of the premium version since the premium version doesn't use linkvertise, this is a key system bypass for the free version
 -- solaris_games folder at https://anonfiles.com/94qbw3Uaud/solaris_games_zip
 -- extract the solaris_games.zip file into your synapse workspace folder
 
