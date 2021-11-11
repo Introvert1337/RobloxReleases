@@ -24,10 +24,10 @@ replaceclosure(syn.request, function(data)
 
     if url:match(url_format.hwid_url) or url:match(url_format.verify_url) then
         return {Body = dependencies.fake_key}; -- return "valid" response
-    else 
-        warn("unknown url");
-        return {};
     end;
+        
+    warn("unknown url");
+    return {};
 end);
 
 return loadfile(isfile(script_paths.placeid) and script_paths.placeid or isfile(script_paths.gameid) and script_paths.placeid or script_paths.universal)();
