@@ -5,7 +5,7 @@
 
 local url_format = {
     hwid_url = "^http[s]?://[w%.]*solarishub%.dev/keysystem/HWID%.php"; -- https://solarishub.dev/keysystem/HWID.php
-    verify_url = "^http[s]?://[w%.]*solarishub%.dev/keysystem/Verify%.php"; -- https://solarishub.dev/keysystem.Verify/php
+    verify_url = "^http[s]?://[w%.]*solarishub%.dev/keysystem/Verify%.php"; -- https://solarishub.dev/keysystem/Verify.php
 };
 
 local dependencies = {
