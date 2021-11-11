@@ -13,23 +13,21 @@ local dependencies = {
     folder_directory = "solaris_games/";
 };
 
-local old_request;
-old_request = replaceclosure(syn.request, function(data)
+local script_paths = {
+    placeid = ("%s/%s.lua"):format(dependencies.folder_directory, game.PlaceId);
+    gameid = ("%s/%s.lua"):format(dependencies.folder_directory, game.GameId);
+    universal = ("%suniversal.lua"):format(dependencies.folder_directory);
+};
+
+replaceclosure(syn.request, function(data)
     local url = data.Url;
 
     if url:match(url_format.hwid_url) or url:match(url_format.verify_url) then
-        return {Body = dependencies.fake_key};
+        return {Body = dependencies.fake_key}; -- return "valid" response
+    else 
+        warn("unknown url");
+        return {};
     end;
-    
-    return old_request(data);
 end);
 
-local placeid_directory, gameid_directory = ("%s/%s.lua"):format(dependencies.folder_directory, game.PlaceId), ("%s/%s.lua"):format(dependencies.folder_directory, game.GameId);
-
-if isfile(placeid_directory) then 
-    return loadfile(placeid_directory)();
-elseif isfile(gameid_directory) then 
-    return loadfile(gameid_directory)();
-else 
-    return loadfile(("%suniversal.lua"):format(dependencies.folder_directory))();
-end;
+return loadfile(isfile(script_paths.placeid) and script_paths.placeid or isfile(script_paths.gameid) and script_paths.placeid or script_paths.universal)();
