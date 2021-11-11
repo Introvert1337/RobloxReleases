@@ -3,6 +3,9 @@
 -- solaris_games folder at https://anonfiles.com/94qbw3Uaud/solaris_games_zip
 -- extract the solaris_games.zip file into your synapse workspace folder
 
+-- this could be done in one line but i think this version is more precise
+-- replaceclosure(syn.request, function() return {Body = ("0"):rep(64)}; end);
+
 local url_format = {
     hwid_url = "^http[s]?://[w%.]*solarishub%.dev/keysystem/HWID%.php"; -- https://solarishub.dev/keysystem/HWID.php
     verify_url = "^http[s]?://[w%.]*solarishub%.dev/keysystem/Verify%.php"; -- https://solarishub.dev/keysystem/Verify.php
