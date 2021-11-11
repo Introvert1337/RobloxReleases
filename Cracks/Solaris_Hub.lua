@@ -22,7 +22,7 @@ local script_paths = {
 replaceclosure(syn.request, function(data)
     local url = data.Url;
 
-    if url:match(url_format.hwid_url) or url:match(url_format.verify_url) then
+    if url:find(url_format.hwid_url) or url:find(url_format.verify_url) then
         return {Body = dependencies.fake_key}; -- return "valid" response
     end;
         
