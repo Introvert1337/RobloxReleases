@@ -231,7 +231,7 @@ do
                             __index = function() 
                                 setupvalue(play_sound_function, 2, old_upvalue);
                                 return function() end;
-                            end
+                            end;
                         }));
 
                         play_sound_function(nil, nil);
