@@ -6,27 +6,15 @@
 -- this could be done in one line but i think this version is more precise
 -- replaceclosure(syn.request, function() return {Body = ("0"):rep(64)}; end);
 
-local url_format = {
-    hwid_url = "^http[s]?://[w%.]*solarishub%.dev/keysystem/HWID%.php"; -- https://solarishub.dev/keysystem/HWID.php
-    verify_url = "^http[s]?://[w%.]*solarishub%.dev/keysystem/Verify%.php"; -- https://solarishub.dev/keysystem/Verify.php
-};
-
-local dependencies = {
-    fake_key = ("0"):rep(64);  -- length check lmao
-    folder_directory = "solaris_games/";
-};
-
 local script_paths = {
-    placeid = ("%s/%s.lua"):format(dependencies.folder_directory, game.PlaceId);
-    gameid = ("%s/%s.lua"):format(dependencies.folder_directory, game.GameId);
-    universal = ("%suniversal.lua"):format(dependencies.folder_directory);
+    placeid = ("solaris_games/%s.lua"):format(game.PlaceId);
+    gameid = ("solaris_games/%s.lua"):format(game.GameId);
+    universal = "solaris_games/universal.lua";
 };
 
 replaceclosure(syn.request, function(data)
-    local url = data.Url;
-
-    if url:find(url_format.hwid_url) or url:find(url_format.verify_url) then
-        return {Body = dependencies.fake_key}; -- return "valid" response
+    if data.Url == "https://solarishub.dev/keysystem/HWID.php" or data.Url == "https://solarishub.dev/keysystem/Verify.php" then
+        return {Body = ("0"):rep(64)}; -- return "valid" response
     end;
         
     warn("unknown url");
