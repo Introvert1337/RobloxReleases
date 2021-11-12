@@ -343,9 +343,9 @@ do
         setupvalue(exit_car_function, 2, {
             OnVehicleJumpExited = {
                 Fire = function() 
-                    setupvalue(exit_car_function, 2, old_upvalues[2]) 
-                end
-            }
+                    setupvalue(exit_car_function, 2, old_upvalues[2]);
+                end;
+            };
         });
         setupvalue(exit_car_function, 6, {Heli = {}});
 
