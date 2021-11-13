@@ -19,6 +19,7 @@ local islclosure = islclosure or is_l_closure;
 local t_find = table.find;
 local t_wait = task.wait;
 local c_yield = coroutine.yield;
+local c_wrap = coroutine.wrap;
 local type = type;
 local tonumber = tonumber;
 
@@ -103,31 +104,18 @@ for index, value in next, getgc(true) do
         
         if t_find(constants, "SpeedBoost") and t_find(constants, "HasHammer") then 
             found_fpe_key = true;
-            local upvalues = getupvalues(value);
+            
+            local dodge_function = getproto(value, 1);
 
-            for index, upvalue in next, upvalues do 
-                if type(upvalue) == "function" then 
-                    if islclosure(upvalue) then
-                        if t_find(getconstants(upvalue), "plum") then 
-                            setupvalue(value, index, function(key)
-                                setupvalue(value, index, upvalues[index]);
-                                dodge_fpe_key = tonumber(("%0.50f"):format(key)); -- shitty method but i can't think of much of a better way to do it
-                                return c_yield();
-                            end);
-                        end;
-                    else 
-                        local function_name = getinfo(upvalue).name;
-
-                        if function_name == "FireServer" or function_name == "Play" then 
-                            setupvalue(value, index, function() 
-                                return setupvalue(value, index, upvalues[index]);
-                            end);
-                        end
-                    end;
-                end;
-            end;
-
-            value(Enum.KeyCode.W);
+            setupvalue(dodge_function, 1, function() end);
+            setupvalue(dodge_function, 2,  function(key)
+                dodge_fpe_key = tonumber(("%0.50f"):format(key));
+            end);
+            setupvalue(dodge_function, 3, tonumber);
+            setupvalue(dodge_function, 4, tostring);
+            setupvalue(dodge_function, 5, function() end);
+            
+            dodge_function();
 
             if patched then 
                 break;
