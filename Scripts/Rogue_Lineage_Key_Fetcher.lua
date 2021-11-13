@@ -15,6 +15,7 @@ local getinfo = getinfo or debug.getinfo;
 local getconstants = getconstants or debug.getconstants;
 local getconnections = getconnections or get_signal_cons;
 local islclosure = islclosure or is_l_closure;
+local getgc = getgc or get_gc_objects;
 
 local t_find = table.find;
 local t_wait = task.wait;
@@ -25,14 +26,14 @@ local tonumber = tonumber;
 
 local run_service = game:GetService("RunService");
 
---// get_key patcher (credit to sor for the patcher) 
+--// method patcher (credit to sor for the patcher) 
 
 local psu_struct = {
     next = "sBgaL",
     rB = -50014
 };
 
-local function patch_get_key(upvalues)
+local function patch_method(upvalues, method)
     local instructions, stack;
 
     for index, upvalue in ipairs(upvalues) do 
@@ -49,67 +50,62 @@ local function patch_get_key(upvalues)
         end;
     end;
 
-    local cur_instr = 0;
-    local to_patch;
+    if method == 1 then -- module type
+        instructions[0] = instructions[#instructions - 5];
+    elseif method == 2 then -- getkey type
+        local cur_instr = 0;
+        local to_patch;
 
-    while true do 
-        local instr = instructions[cur_instr];
+        while true do 
+            local instr = instructions[cur_instr];
 
-        if instr and type(instr[psu_struct.rB]) == "table" then 
-            local success = true;
-            for index = 1, 5 do 
-                if type(instructions[cur_instr + index][psu_struct.rB]) ~= "table" then 
-                    success = false;
+            if instr and type(instr[psu_struct.rB]) == "table" then 
+                local success = true;
+
+                for index = 1, 5 do 
+                    if type(instructions[cur_instr + index][psu_struct.rB]) ~= "table" then 
+                        success = false;
+                    end;
+                end;
+
+                if success then
+                    local to_patch = instr;
+                    local go_to = instr[psu_struct.rB];
+
+                    for index, val in next, go_to do 
+                        to_patch[index] = val;
+                    end;
+
+                    cur_instr = t_find(instructions, go_to);
+
+                    break;
                 end;
             end;
 
-            if success then
-                local to_patch = instr;
-                local go_to = instr[psu_struct.rB];
-
-                for index, val in next, go_to do 
-                    to_patch[index] = val;
-                end;
-
-                cur_instr = t_find(instructions, go_to);
-                break;
-            end;
+            cur_instr = cur_instr + 1;
         end;
-
-        cur_instr = cur_instr + 1;
     end;
 end;
 
 --// check if keyhandler updated
 
-assert(getscripthash(game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler")) == "1e619fe2ee00718f0b70188beb78d3bf96f1d86f12141482ddeddf2f1216853df4846eb43b10dcd04bd8b594b3122ff0", "KeyHandler Script Updated!");
+local key_handler = game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler");
+assert(getscripthash(key_handler) == "1e619fe2ee00718f0b70188beb78d3bf96f1d86f12141482ddeddf2f1216853df4846eb43b10dcd04bd8b594b3122ff0", "KeyHandler Script Updated!");
 
---// gc loop to find and patch get_key and find the dodge remote fpe key
+--// gc loop to find the dodge remote fpe key
 
-local patched, found_fpe_key = false, false;
 local dodge_fpe_key;
 
-for index, value in next, getgc(true) do 
-    if type(value) == "table" then 
-        if #value == 2 and type(value[1]) == "function" and type(value[2]) == "function" and getinfo(value[1]).source:find("KeyHandler") then 
-            patched = true;
-            patch_get_key(getupvalues(value[1]));
-
-            if found_fpe_key then 
-                break;
-            end;
-        end;
-    elseif type(value) == "function" and islclosure(value) and getinfo(value).source:find("Input") then 
+for index, value in next, getgc() do 
+    if islclosure(value) and getinfo(value).source:find("Input") then 
         local constants = getconstants(value);
         
         if t_find(constants, "SpeedBoost") and t_find(constants, "HasHammer") then 
-            found_fpe_key = true;
-            
             local dodge_function = getproto(value, 1);
 
             setupvalue(dodge_function, 1, function() end);
             setupvalue(dodge_function, 2,  function(key)
-                dodge_fpe_key = tonumber(("%0.50f"):format(key));
+                dodge_fpe_key = tonumber(("%0.50f"):format(key)); -- terrible method
             end);
             setupvalue(dodge_function, 3, tonumber);
             setupvalue(dodge_function, 4, tostring);
@@ -117,12 +113,18 @@ for index, value in next, getgc(true) do
             
             dodge_function();
 
-            if patched then 
-                break;
-            end;
+            break
         end;
     end;
 end;
+
+--// patch module and getkey function
+
+local module = require(key_handler);
+patch_method(getupvalues(module), 1);
+
+local get_key = module()[1];
+patch_method(getupvalues(get_key), 2);
 
 --// hook wait to stop detection loop in the areaclient script
 
@@ -150,7 +152,6 @@ getgenv().get_remote = function(remote_name)
             
             setupvalue(remote_function, 5, remote_name == "Dodge" and dodge_fpe_key or remote_name);
             setupvalue(remote_function, 6, function() end);
-            
             setupvalue(remote_function, 3, function(fired_remote)
                 remote = fired_remote;
                 setupvalue(remote_function, 1, false);
