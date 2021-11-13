@@ -1,284 +1,186 @@
--- this was mostly made by sor
+if getgenv().get_remote then return end;
 
-local key_handler = game:GetService("ReplicatedStorage").Assets.Modules.KeyHandler;
+--// wait until game loaded
 
-local patcher = {};
+if not game:IsLoaded() then 
+    game.Loaded:Wait();
+end;
 
-do 
-    local tf = table.find;
-    local type = type;
+--// localizations 
 
-    patcher.__index = patcher;
+local getupvalue = getupvalue or debug.getupvalue;
+local getupvalues = getupvalues or debug.getupvalues;
+local setupvalue = setupvalue or debug.setupvalue;
+local getinfo = getinfo or debug.getinfo;
+local getconstants = getconstants or debug.getconstants;
+local getconnections = getconnections or get_signal_cons;
+local islclosure = islclosure or is_l_closure;
 
-    local psu_struct = {
-        next = "sBgaL",
-        rC = 639954,
-        rBx = "jDWh3",
-        rB = -50014,
-        rA = "CuAjnb"
-    };
+local t_find = table.find;
+local t_wait = task.wait;
+local c_yield = coroutine.yield;
+local type = type;
+local tonumber = tonumber;
 
-    function patcher:new(upvalues)
-        return setmetatable({
-            upvalues = upvalues,
-            instructions = nil,
-            stack = nil,
-            indexes = {},
-            cur_instr = 0;
-        }, patcher);
+local run_service = game:GetService("RunService");
+
+--// get_key patcher (credit to sor for the patcher) 
+
+local psu_struct = {
+    next = "sBgaL",
+    rB = -50014
+};
+
+local function patch_get_key(upvalues)
+    local instructions, stack;
+
+    for index, upvalue in ipairs(upvalues) do 
+        if type(upvalue) == "table" then
+            local entry = upvalue[0];
+
+            if entry then
+                if type(entry) == "table" and entry[psu_struct.next] then
+                    instructions = upvalue;
+                end;
+            else
+                stack = upvalue;
+            end;
+        end;
     end;
 
-    function patcher:grab_dependencies()
-        for idx, upvalue in ipairs(self.upvalues) do 
-            if type(upvalue) == "table" then
-                if upvalue[0] then
-                    local entry = upvalue[0];
+    local cur_instr = 0;
+    local to_patch;
 
-                    if entry and type(entry) == "table" then 
-                        if entry[psu_struct.next] then 
-                            self.instructions = upvalue;
-                        end;
-                    end;
-                else
-                    self.stack = upvalue;
+    while true do 
+        local instr = instructions[cur_instr];
+
+        if instr and type(instr[psu_struct.rB]) == "table" then 
+            local success = true;
+            for index = 1, 5 do 
+                if type(instructions[cur_instr + index][psu_struct.rB]) ~= "table" then 
+                    success = false;
                 end;
+            end;
+
+            if success then
+                local to_patch = instr;
+                local go_to = instr[psu_struct.rB];
+
+                for index, val in next, go_to do 
+                    to_patch[index] = val;
+                end;
+
+                cur_instr = t_find(instructions, go_to);
+                break;
             end;
         end;
 
-        assert(self.instructions, "unable to find instructions!");
-        assert(self.stack, "unable to find stack!");
-    end;
-
-    function patcher:patch_instruction(old, new)
-        for idx, val in next, new do 
-            old[idx] = val;
-        end;
-    end;
-
-    function patcher:patch_method(method, ...)
-        if method == 1 then
-            local cur_instr = self.cur_instr;
-            local eq_amount = 0;
-
-            while true do
-                local instr = self.instructions[cur_instr]; 
-                if type(instr[psu_struct.rB]) == "table" then 
-                    eq_amount++;
-                else
-                    eq_amount = 0;
-                end;
-
-                if eq_amount == 2 then 
-                    local to_patch = self.instructions[cur_instr - 1];
-                    local go_to = instr[psu_struct.rB];
-                
-                    self:patch_instruction(to_patch, go_to);
-                    cur_instr = tf(self.instructions, go_to);
-                    break;
-                end;
-
-                cur_instr++;
-            end;
-
-            self.cur_instr = cur_instr;
-        elseif method == 2 then 
-            local cur_instr = self.cur_instr;
-            local to_patch;
-
-            while true do 
-                local instr = self.instructions[cur_instr];
-
-                if type(instr[psu_struct.rB]) == "table" then 
-                    if self.instructions[cur_instr + 2][psu_struct.rC] == "LocalPlayer" then 
-                        local to_patch = instr;
-                        local go_to = instr[psu_struct.rB];
-
-                        self:patch_instruction(to_patch, go_to);
-                        cur_instr = tf(self.instructions, go_to);
-                        break;
-                    end;
-                end;
-
-                cur_instr++;
-            end;
-
-            self.cur_instr = cur_instr;
-        elseif method == 3 then
-            local cur_instr = self.cur_instr;
-            local to_patch;
-
-            while true do 
-                local instr = self.instructions[cur_instr];
-
-                if type(instr[psu_struct.rB]) == "table" then 
-                    if self.instructions[cur_instr - 3][psu_struct.rC] == "FindFirstChild" then 
-                        local to_patch = instr;
-                        local go_to = instr[psu_struct.rB];
-
-                        self:patch_instruction(to_patch, go_to);
-                        cur_instr = tf(self.instructions, go_to);
-                        break;
-                    end;
-                end;
-
-                cur_instr++;
-            end;
-
-            self.cur_instr = cur_instr;
-        elseif method == 4 then
-            local cur_instr = self.cur_instr;
-            local to_patch;
-
-            while true do 
-                local instr = self.instructions[cur_instr];
-
-                if type(instr[psu_struct.rB]) == "table" then 
-                    if type(self.instructions[cur_instr + 2][psu_struct.rBx]) == "table" and 
-                        type(self.instructions[cur_instr + 5][psu_struct.rBx]) == "table" then 
-                        local to_patch = instr;
-                        local go_to = instr[psu_struct.rB];
-
-                        self:patch_instruction(to_patch, go_to);
-                        cur_instr = tf(self.instructions, go_to);
-                        break;
-                    end;
-                end;
-
-                cur_instr++;
-            end;
-
-            self.cur_instr = cur_instr;
-        elseif method == 5 then
-            local cur_instr = self.cur_instr;
-            local to_patch;
-
-            local args = {...};
-
-            while true do 
-                local instr = self.instructions[cur_instr];
-
-                if type(instr[psu_struct.rB]) == "table" then 
-                    if self.instructions[cur_instr + args[1]][psu_struct.rB] == "EEKEWAEJIWAJDOIWAJDIOJAWDIOJAWODJOAIW" then 
-                        local to_patch = instr;
-                        local go_to = instr[psu_struct.rB];
-
-                        self:patch_instruction(to_patch, go_to);
-                        cur_instr = tf(self.instructions, go_to);
-                        break;
-                    end;
-                end;
-
-                cur_instr++;
-            end;
-
-            self.cur_instr = cur_instr;
-        elseif method == 6 then
-            local cur_instr = self.cur_instr;
-            local to_patch;
-
-            while true do 
-                local instr = self.instructions[cur_instr];
-
-                if type(instr[psu_struct.rB]) == "table" then 
-                    if type(self.instructions[cur_instr + 4][psu_struct.rB]) == "table" then 
-                        local to_patch = instr;
-                        local go_to = self.instructions[cur_instr + 4][psu_struct.rB];
-
-                        self:patch_instruction(to_patch, go_to);
-                        cur_instr = tf(self.instructions, go_to);
-                        break;
-                    end;
-                end;
-
-                cur_instr++;
-            end;
-
-            self.cur_instr = cur_instr;
-        elseif method == 7 then
-            local cur_instr = self.cur_instr;
-            local to_patch;
-
-            while true do 
-                local instr = self.instructions[cur_instr];
-
-                if type(instr[psu_struct.rB]) == "table" then 
-                    local success = true;
-                    for idx = 1, 5 do 
-                        if type(self.instructions[cur_instr + idx][psu_struct.rB]) ~= "table" then 
-                            success = false;
-                        end;
-                    end;
-
-                    if success then
-                        local to_patch = instr;
-                        local go_to = instr[psu_struct.rB];
-
-                        self:patch_instruction(to_patch, go_to);
-                        cur_instr = tf(self.instructions, go_to);
-                        break;
-                    end;
-                end;
-
-                cur_instr++;
-            end;
-
-            self.cur_instr = cur_instr;
-        end;
-    end;
-
-    function patcher:patch_instructions(patch_type)
-        if patch_type == 1 then -- module type
-            self.instructions[0] = self.instructions[#self.instructions - 5];
-        elseif patch_type == 2 then -- getkey type
-            self:patch_method(1);
-            self:patch_method(2);
-            self:patch_method(3);
-            self:patch_method(4);
-            self:patch_method(5, 9);
-            self:patch_method(5, 6);
-            self:patch_method(5, 6);
-            self:patch_method(6);
-            self:patch_method(7);
-
-            --[[
-                self:patch_instruction(self.instructions[8], self.instructions[32]);
-                self:patch_instruction(self.instructions[45], self.instructions[81]);
-                self:patch_instruction(self.instructions[88], self.instructions[102]);
-                self:patch_instruction(self.instructions[109], self.instructions[132]);
-                self:patch_instruction(self.instructions[135], self.instructions[152]);
-                self:patch_instruction(self.instructions[161], self.instructions[175]);
-                self:patch_instruction(self.instructions[185], self.instructions[202]);
-                self:patch_instruction(self.instructions[203], self.instructions[219]);
-                self:patch_instruction(self.instructions[222], self.instructions[241]);
-            ]]
-        end;
-    end;
-
-    function patcher:patch(patch_type)
-        self:grab_dependencies();
-
-        self:patch_instructions(patch_type);
+        cur_instr = cur_instr + 1;
     end;
 end;
 
-assert(getscripthash(key_handler) == "082d0ac8b31be577c717ceac49ba57fdbdc2fcf23206fd4dfc1fdb22818962d0b95e655681f4d9f9bc584b365cff83b6", "Rogue KeyHandler Updated!");
+--// check if keyhandler updated
 
-local module = require(key_handler);
+assert(getscripthash(game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler")) == "1e619fe2ee00718f0b70188beb78d3bf96f1d86f12141482ddeddf2f1216853df4846eb43b10dcd04bd8b594b3122ff0", "KeyHandler Script Updated!");
 
-local module_patcher = patcher:new(getupvalues(module));
-module_patcher:patch(1);
+--// gc loop to find and patch get_key and find the dodge remote fpe key
 
-local get_key, set_key = unpack(module());
+local patched, found_fpe_key = false, false;
+local dodge_fpe_key;
 
-local get_key_patcher = patcher:new(getupvalues(get_key));
-get_key_patcher:patch(2);
+for index, value in next, getgc(true) do 
+    if type(value) == "table" then 
+        if #value == 2 and type(value[1]) == "function" and type(value[2]) == "function" and getinfo(value[1]).source:find("KeyHandler") then 
+            patched = true;
+            patch_get_key(getupvalues(value[1]));
 
-local dodge_fpe_key = (398 + 0.000100214 + (0.005328780 / (10 ^ 9)) + (0.33 / (10 ^ 18)));
-local old_get_key = get_key;
+            if found_fpe_key then 
+                break;
+            end;
+        end;
+    elseif type(value) == "function" and islclosure(value) and getinfo(value).source:find("Input") then 
+        local constants = getconstants(value);
+        
+        if t_find(constants, "SpeedBoost") and t_find(constants, "HasHammer") then 
+            found_fpe_key = true;
+            local upvalues = getupvalues(value);
 
-getgenv().get_key = function(key, pass)
-    pass = pass or "plum";
-    key = key == "Dodge" and dodge_fpe_key or key;
+            for index, upvalue in next, upvalues do 
+                if type(upvalue) == "function" then 
+                    if islclosure(upvalue) then
+                        if t_find(getconstants(upvalue), "plum") then 
+                            setupvalue(value, index, function(key)
+                                setupvalue(value, index, upvalues[index]);
+                                dodge_fpe_key = tonumber(("%0.50f"):format(key)); -- shitty method but i can't think of much of a better way to do it
+                                return c_yield();
+                            end);
+                        end;
+                    else 
+                        local function_name = getinfo(upvalue).name;
 
-    return old_get_key(key, pass);
+                        if function_name == "FireServer" or function_name == "Play" then 
+                            setupvalue(value, index, function() 
+                                return setupvalue(value, index, upvalues[index]);
+                            end);
+                        end
+                    end;
+                end;
+            end;
+
+            value(Enum.KeyCode.W);
+
+            if patched then 
+                break;
+            end;
+        end;
+    end;
+end;
+
+--// hook wait to stop detection loop in the areaclient script
+
+local wait_hook;
+wait_hook = hookfunction(wait, function(t)
+    if getinfo(3).source:find("AreaClient") and not t then
+        return c_yield();
+    end;
+    
+    return wait_hook(t);
+end);
+
+--// function to grab a remote 
+
+getgenv().get_remote = function(remote_name)
+    local remote;
+    
+    for index, connection in next, getconnections(run_service.RenderStepped) do 
+        local connection_function = connection.Function
+        
+        if type(connection_function) == "function" and getinfo(connection_function).source:find("AreaClient") then 
+            local remote_function = getupvalue(connection_function, 5);
+            local old_fire_server = getupvalue(remote_function, 3);
+            local old_upvalues = getupvalues(connection_function);
+            
+            setupvalue(remote_function, 5, remote_name == "Dodge" and dodge_fpe_key or remote_name);
+            
+            setupvalue(remote_function, 3, function(fired_remote)
+                setupvalue(remote_function, 3, old_fire_server);
+                remote = fired_remote;
+                return;
+            end);
+            
+            setupvalue(connection_function, 4, "");
+            setupvalue(connection_function, 6, 0);
+            setupvalue(connection_function, 7, function() 
+                return c_yield(); 
+            end);
+            
+            while not remote do t_wait() end;
+    
+            setupvalue(connection_function, 4, old_upvalues[4]);
+            setupvalue(connection_function, 6, old_upvalues[6]);
+            setupvalue(connection_function, 7, old_upvalues[7]);
+        
+            return remote;
+        end;
+    end;
 end;
