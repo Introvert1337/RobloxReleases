@@ -23,6 +23,7 @@ local c_yield = coroutine.yield;
 local c_wrap = coroutine.wrap;
 local type = type;
 local tonumber = tonumber;
+local assert = assert;
 
 local run_service = game:GetService("RunService");
 
@@ -49,6 +50,9 @@ local function patch_method(upvalues, method)
             end;
         end;
     end;
+
+    assert(instructions, "unable to find instructions!");
+    assert(stack, "unable to find stack!");
 
     if method == 1 then -- module type
         instructions[0] = instructions[#instructions - 5];
@@ -90,7 +94,7 @@ end;
 --// check if keyhandler updated
 
 local key_handler = game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler");
-assert(getscripthash(key_handler) == "1e619fe2ee00718f0b70188beb78d3bf96f1d86f12141482ddeddf2f1216853df4846eb43b10dcd04bd8b594b3122ff0", "KeyHandler Script Updated!");
+assert(getscripthash(key_handler) == "1e619fe2ee00718f0b70188beb78d3bf96f1d86f12141482ddeddf2f1216853df4846eb43b10dcd04bd8b594b3122ff0", "keyhandler script updated!");
 
 --// gc loop to find the dodge remote fpe key
 
@@ -117,6 +121,8 @@ for index, value in next, getgc() do
         end;
     end;
 end;
+
+assert(dodge_fpe_key, "unable to find dodge fpe key!");
 
 --// patch module and getkey function
 
