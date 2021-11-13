@@ -144,14 +144,14 @@ getgenv().get_remote = function(remote_name)
         local connection_function = connection.Function
         
         if type(connection_function) == "function" and getinfo(connection_function).source:find("AreaClient") then 
-            local remote_function = getupvalue(connection_function, 5);
-            local old_fire_server = getupvalue(remote_function, 3);
             local old_upvalues = getupvalues(connection_function);
+            local remote_function = old_upvalues[5];
+            local old_remote_upvalues = getupvalues(remote_function);
             
             setupvalue(remote_function, 5, remote_name == "Dodge" and dodge_fpe_key or remote_name);
+            setupvalue(remote_function, 6, function() end);
             
             setupvalue(remote_function, 3, function(fired_remote)
-                setupvalue(remote_function, 3, old_fire_server);
                 remote = fired_remote;
                 return;
             end);
@@ -167,6 +167,10 @@ getgenv().get_remote = function(remote_name)
             setupvalue(connection_function, 4, old_upvalues[4]);
             setupvalue(connection_function, 6, old_upvalues[6]);
             setupvalue(connection_function, 7, old_upvalues[7]);
+
+            setupvalue(remote_function, 3, old_remote_upvalues[3]);
+            setupvalue(remote_function, 5, old_remote_upvalues[5]);
+            setupvalue(remote_function, 6, old_remote_upvalues[6]);
         
             return remote;
         end;
