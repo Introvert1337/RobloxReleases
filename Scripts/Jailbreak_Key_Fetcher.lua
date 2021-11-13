@@ -36,7 +36,7 @@ local dependencies = {
     start_time = tick();
     marked_functions = {};
     network_keys = {};
-    keys_list = {"Punch", "Hijack", "Kick", "CarKick", "FallDamage", "PopTire", "SwitchTeam", "BroadcastInputBegan", "BroadcastInputEnded", "Arrest", "Eject", "EnterCar", "ExitCar", "SwitchTeam", "PlaySound"};
+    keys_list = {"Punch", "Hijack", "Kick", "CarKick", "FallDamage", "PopTire", "SwitchTeam", "BroadcastInputBegan", "BroadcastInputEnded", "Arrest", "Eject", "EnterCar", "ExitCar", "SwitchTeam", "PlaySound", "SpawnCar"};
     modules = {
         default_actions = require(replicated_storage.Game.DefaultActions);
         military_turret_system = require(replicated_storage.Game.MilitaryTurret.MilitaryTurretSystem);
@@ -353,6 +353,14 @@ do
 
         setupvalue(exit_car_function, 1, old_upvalues[1]);
         setupvalue(exit_car_function, 6, old_upvalues[6]);
+    end;
+
+    do -- spawncar (given to me by Tazed#8126)
+        local spawn_car_function = getproto(require(game:GetService("ReplicatedStorage").Game.Garage.GarageUI).Init, 3);
+
+        functions.hook_fire_server(spawn_car_function, 1, "SpawnCar");
+
+        spawn_car_function({});
     end;
 end;
 
