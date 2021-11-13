@@ -27,7 +27,7 @@ local assert = assert;
 
 local run_service = game:GetService("RunService");
 
---// method patcher (credit to sor for the patcher) 
+--// obfuscation patcher (credit to sor) 
 
 local psu_struct = {
     next = "sBgaL",
