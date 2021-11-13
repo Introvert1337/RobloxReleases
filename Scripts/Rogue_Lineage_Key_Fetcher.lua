@@ -27,7 +27,7 @@ local assert = assert;
 
 local run_service = game:GetService("RunService");
 
---// obfuscation patcher (credit to sor) 
+--// method patcher (credit to sor for the patcher) 
 
 local psu_struct = {
     next = "sBgaL",
@@ -76,8 +76,8 @@ local function patch_method(upvalues, method)
                     local to_patch = instr;
                     local go_to = instr[psu_struct.rB];
 
-                    for index, val in next, go_to do 
-                        to_patch[index] = val;
+                    for index, value in next, go_to do 
+                        to_patch[index] = value;
                     end;
 
                     cur_instr = t_find(instructions, go_to);
@@ -145,42 +145,48 @@ end);
 
 --// function to grab a remote 
 
+local area_client_connection_function;
+
 getgenv().get_remote = function(remote_name)
+    if not area_client_connection_function then 
+        for index, connection in next, getconnections(run_service.RenderStepped) do 
+            local connection_function = connection.Function;
+            
+            if type(connection_function) == "function" and getinfo(connection_function).source:find("AreaClient") then 
+                area_client_connection_function = connection_function;
+            end;
+        end;
+    end; 
+
     local remote;
     
-    for index, connection in next, getconnections(run_service.RenderStepped) do 
-        local connection_function = connection.Function
-        
-        if type(connection_function) == "function" and getinfo(connection_function).source:find("AreaClient") then 
-            local old_upvalues = getupvalues(connection_function);
-            local remote_function = old_upvalues[5];
-            local old_remote_upvalues = getupvalues(remote_function);
-            
-            setupvalue(remote_function, 5, remote_name == "Dodge" and dodge_fpe_key or remote_name);
-            setupvalue(remote_function, 6, function() end);
-            setupvalue(remote_function, 3, function(fired_remote)
-                remote = fired_remote;
-                setupvalue(remote_function, 1, false);
-                return;
-            end);
-            
-            setupvalue(connection_function, 4, "");
-            setupvalue(connection_function, 6, 0);
-            setupvalue(connection_function, 7, function() 
-                return c_yield(); 
-            end);
-            
-            while not remote do t_wait() end;
+    local old_upvalues = getupvalues(area_client_connection_function);
+    local remote_function = old_upvalues[5];
+    local old_remote_upvalues = getupvalues(area_client_connection_function);
     
-            setupvalue(connection_function, 4, old_upvalues[4]);
-            setupvalue(connection_function, 6, old_upvalues[6]);
-            setupvalue(connection_function, 7, old_upvalues[7]);
+    setupvalue(remote_function, 5, remote_name == "Dodge" and dodge_fpe_key or remote_name);
+    setupvalue(remote_function, 6, function() end);
+    setupvalue(remote_function, 3, function(fired_remote)
+        remote = fired_remote;
+        setupvalue(remote_function, 1, false);
+        return;
+    end);
+    
+    setupvalue(area_client_connection_function, 4, "");
+    setupvalue(area_client_connection_function, 6, 0);
+    setupvalue(area_client_connection_function, 7, function() 
+        return c_yield(); 
+    end);
+    
+    while not remote do t_wait() end;
 
-            setupvalue(remote_function, 3, old_remote_upvalues[3]);
-            setupvalue(remote_function, 5, old_remote_upvalues[5]);
-            setupvalue(remote_function, 6, old_remote_upvalues[6]);
-        
-            return remote;
-        end;
-    end;
+    setupvalue(area_client_connection_function, 4, old_upvalues[4]);
+    setupvalue(area_client_connection_function, 6, old_upvalues[6]);
+    setupvalue(area_client_connection_function, 7, old_upvalues[7]);
+
+    setupvalue(remote_function, 3, old_remote_upvalues[3]);
+    setupvalue(remote_function, 5, old_remote_upvalues[5]);
+    setupvalue(remote_function, 6, old_remote_upvalues[6]);
+
+    return remote;
 end;
