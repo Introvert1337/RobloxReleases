@@ -357,7 +357,7 @@ do
     end;
 
     do -- spawncar (given to me by Tazed#8126)
-        local spawn_car_function = getproto(modules.garage_ui.Init, 3);
+        local spawn_car_function = getproto(dependencies.modules.garage_ui.Init, 3);
 
         functions.hook_fire_server(spawn_car_function, 1, "SpawnCar");
 
