@@ -45,6 +45,7 @@ local dependencies = {
         taser = require(replicated_storage.Game.Item.Taser);
         gun = require(replicated_storage.Game.Item.Gun);
         falling = require(replicated_storage.Game.Falling);
+        garage_ui = require(replicated_storage.Game.Garage.GarageUI);
     };
 };
 
@@ -356,7 +357,7 @@ do
     end;
 
     do -- spawncar (given to me by Tazed#8126)
-        local spawn_car_function = getproto(require(game:GetService("ReplicatedStorage").Game.Garage.GarageUI).Init, 3);
+        local spawn_car_function = getproto(modules.garage_ui.Init, 3);
 
         functions.hook_fire_server(spawn_car_function, 1, "SpawnCar");
 
