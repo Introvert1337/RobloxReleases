@@ -153,6 +153,7 @@ getgenv().get_remote = function(remote_name)
             
             setupvalue(remote_function, 3, function(fired_remote)
                 remote = fired_remote;
+                setupvalue(remote_function, 1, false);
                 return;
             end);
             
