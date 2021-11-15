@@ -147,6 +147,8 @@ local start_time = tick();
 local dodge_fpe_key;
 
 repeat -- repeating a gc loop is usually bad it should be fine in this case considering it will probably only ever repeat once
+    wait(1);
+    
     for index, value in next, getgc() do 
         if islclosure(value) and getinfo(value).source:find("Input") then 
             local constants = getconstants(value);
@@ -167,10 +169,6 @@ repeat -- repeating a gc loop is usually bad it should be fine in this case cons
                 break
             end;
         end;
-    end;
-
-    if not dodge_fpe_key then
-        wait(1);
     end;
 until dodge_fpe_key;
 
