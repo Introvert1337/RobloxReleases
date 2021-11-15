@@ -128,8 +128,8 @@ end;
 
 --// check if keyhandler updated
 
-local key_handler = game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler");
-assert(getscripthash(key_handler) == dependencies.script_hash, "keyhandler script updated!");
+local keyhandler = game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler");
+assert(getscripthash(keyhandler) == dependencies.script_hash, "keyhandler script updated!");
 
 --// wait until character spawned
 
@@ -174,7 +174,7 @@ until dodge_fpe_key;
 
 --// patch module and getkey function
 
-local module = require(key_handler);
+local module = require(keyhandler);
 patch_method(getupvalues(module), 1);
 
 local get_key = module()[1];
