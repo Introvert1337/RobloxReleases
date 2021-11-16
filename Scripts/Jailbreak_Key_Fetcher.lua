@@ -262,27 +262,6 @@ do
         end;
     end;
 
-    do -- poptire
-        local bullet_function = getproto(dependencies.modules.gun.SetupBulletEmitter, 2);
-
-        setupvalue(bullet_function, 1, {Weld = function() end});
-        setupvalue(bullet_function, 2, {
-            Local = false; 
-            LastImpactSound = 0; 
-            LastImpact = 0.2;
-        });
-        setupvalue(bullet_function, 5, replicated_storage);
-        setupvalue(bullet_function, 6, {
-            AddItem = function() 
-                getupvalue(bullet_function, 2).Local = true; 
-            end;
-        });
-
-        functions.hook_fire_server(bullet_function, 7, "PopTire");
-
-        pcall(bullet_function, {Color = Color3.new(0, 0, 0), IsDescendantOf = function(self, obj) return obj.Name == "ShootingRange" end}, v3_new(0, 0, 0), v3_new(0, 0, 0), 0);
-    end;
-
     do -- pickpocket / arrest
         local connection = getconnections(collection_service:GetInstanceAddedSignal("Character"))[1].Function;
         local interact_function = getupvalue(connection, 2);
