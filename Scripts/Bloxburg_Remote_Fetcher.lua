@@ -1,13 +1,16 @@
 -- i released this to the bloxburg epic thing server (discord.gg/bloxburgepicthing) a while back, posting it here now
 -- this is the only script i actually fully commented lol
 
---// env 
+--// localizations
 
 local getupvalue = getupvalue or debug.getupvalue;
 local getinfo = getinfo or debug.getinfo;
 local islclosure = islclosure or is_l_closure;
 local getreg = getreg or debug.getregistry;
-local getconstants = debug.getconstants or getconstants;
+local getconstants = getconstants or debug.getconstants;
+
+local type = type;
+local tostring = tostring;
 
 --// variables 
 
@@ -15,26 +18,23 @@ local remotes = {}; -- table that remotes will be stored in with name index
 
 local data_manager = require(game:GetService("ReplicatedStorage").Modules.DataManager); -- data manager module
 local hashes = getupvalue(getupvalue(data_manager.FireServer, 4), 3); -- table of remotes with keys
-local remote_added; -- empty variable for function
 
 --// locate remoteAdded function 
 
-for index, value in next, getreg() do -- loop through registry
+local registry = getreg();
+
+for index = 1, #registry do -- loop through registry
+    local value = registry[index]; -- get the value of the registry at the current for loop index
+    
     if type(value) == "function" and islclosure(value) then -- checks if value is a function and lua closure
-        local first_constant = getconstants(value)[1]; -- could getconstant(value, 1), this is to avoid constant index error
-        local source_script = getinfo(value).source; -- script that function is in
-        
-        if first_constant == "tostring" and source_script:find("DataManager") then -- checks if first constant is tostring and script is DataManager
-            remote_added = value; -- func that has remote name and key table upvalue, called on datamanager.descendantadded, but getconnections is unreliable
-            break; -- breaks loop since function is found
+        if getconstants(value)[1] == "tostring" and getinfo(value).source:find("DataManager") then -- checks if first constant is tostring and script is DataManager
+            for hash, name in next, getupvalue(getupvalue(value, 2), 1) do
+                remotes[name:sub(1, 2) == "F_" and name:sub(3) or name] = hashes[hash]; -- sort remotes and remove prefix from some
+            end;
+
+            break;
         end;
     end;
-end;
-
---// sort remotes
-
-for index, value in next, getupvalue(getupvalue(remote_added, 2), 1) do -- loop through table that has remote name and key
-    remotes[value:sub(1, 2) == "F_" and value:sub(3) or value] = hashes[index]; -- store remotes by name and instance
 end;
 
 --// call remote
