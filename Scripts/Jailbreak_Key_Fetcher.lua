@@ -349,7 +349,7 @@ end;
 --// Output Keys 
 
 do
-    if shared.output_keys ~= false then
+    if shared.output_keys then
         rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - dependencies.start_time));
         
         for index, key in next, dependencies.network_keys do 
