@@ -183,7 +183,7 @@ local function get_fake_area()
     local current_area = getupvalue(area_client_remote_function, 2);
     
     for index, area in next, area_markers_folder:GetChildren() do 
-        local area_name = area.Name 
+        local area_name = area.Name;
         
         if area_name ~= current_area then 
             return area_name;
@@ -199,8 +199,7 @@ getgenv().get_remote = function(remote_name)
     setupvalue(area_client_remote_function, 6, function() end);
     setupvalue(area_client_remote_function, 3, function(fired_remote)
         remote = fired_remote;
-        setupvalue(area_client_remote_function, 1, false);
-        return;
+        return setupvalue(area_client_remote_function, 1, false);
     end);
     
     secure_call(area_client_remote_function, area_client, get_fake_area());
