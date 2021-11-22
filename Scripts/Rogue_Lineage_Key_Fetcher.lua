@@ -199,7 +199,7 @@ end));
 local old_namecall;
 old_namecall = hookmetamethod(game, "__namecall", function(self, ...)
     if self == workspace and getnamecallmethod() == "FindPartOnRayWithWhitelist" then 
-        if getinfo(3, "f").func == area_client_connection_function and getupvalue(area_client_connection_function, 6) == 0 then
+        if getinfo(Krnl and 5 or 3, "f").func == area_client_connection_function and getupvalue(area_client_connection_function, 6) == 0 then
             local fake_area = get_fake_area();
     
             return fake_area, fake_area.Position, fake_area.Material;
