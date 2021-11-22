@@ -13,30 +13,25 @@ local getupvalues = getupvalues or debug.getupvalues;
 local setupvalue = setupvalue or debug.setupvalue;
 local getinfo = getinfo or debug.getinfo;
 local getconstants = getconstants or debug.getconstants;
-local getconnections = getconnections or get_signal_cons;
-local islclosure = islclosure or is_l_closure;
-local getgc = getgc or get_gc_objects;
+local islclosure = islclosure;
+local secure_call = syn.secure_call;
 
 local t_find = table.find;
 local t_wait = task.wait;
 local c_yield = coroutine.yield;
-local c_wrap = coroutine.wrap;
 local type = type;
 local tonumber = tonumber;
-local assert = assert;
 
 local run_service = game:GetService("RunService");
 local player = game:GetService("Players").LocalPlayer;
 
-local dependencies = {
+local dependencies = { -- how to get dependencies values: https://pastebin.com/raw/jE9RQW82
     psu_struct = {
         next = "sBgaL",
         rB = -50014
     },
-    script_hash = "1e619fe2ee00718f0b70188beb78d3bf96f1d86f12141482ddeddf2f1216853df4846eb43b10dcd04bd8b594b3122ff0"
+    script_hash = "59b53f13c91177e3630a6e877d966ec5e272071125413b9f3c4604e824b8b6a1bb632563cc9ce33c70833edb032a6b06"
 };
-
---// how to get dependencies values: https://pastebin.com/raw/jE9RQW82
 
 --// method patcher (credit to sor for the patcher) 
 
@@ -56,9 +51,6 @@ local function patch_method(upvalues, method)
             end;
         end;
     end;
-
-    assert(instructions, "unable to find instructions!");
-    assert(stack, "unable to find stack!");
 
     if method == 1 then -- module type
         instructions[0] = instructions[#instructions - 5];
@@ -164,25 +156,37 @@ end);
 
 --// remote fetcher
 
-local area_client_connection_function, area_client_remote_function;
+local area_client_remote_function;
 
 repeat 
     for index, connection in next, getconnections(run_service.RenderStepped) do 
         local connection_function = connection.Function;
         
         if type(connection_function) == "function" and getinfo(connection_function).source:find("AreaClient") then 
-            area_client_connection_function = connection_function;
-            area_client_remote_function = getupvalue(area_client_connection_function, 5);
+            area_client_remote_function = getupvalue(connection_function, 5);
         end;
     end;
 
     t_wait();
-until area_client_connection_function and area_client_remote_function;
+until area_client_remote_function;
+
+local area_markers_folder = workspace:WaitForChild("AreaMarkers");
+local area_client = player.PlayerGui:WaitForChild("AreaGui"):WaitForChild("AreaClient");
+
+local function get_fake_area()
+    local current_area = getupvalue(area_client_remote_function, 2);
+    
+    for index, area in next, area_markers_folder:GetChildren() do 
+        local area_name = area.Name 
+        
+        if area_name ~= current_area then 
+            return area_name;
+        end;
+    end;
+end;
 
 getgenv().get_remote = function(remote_name)
     local remote;
-    
-    local old_upvalues = getupvalues(area_client_connection_function);
     local old_remote_upvalues = getupvalues(area_client_remote_function);
     
     setupvalue(area_client_remote_function, 5, remote_name == "Dodge" and dodge_fpe_key or remote_name);
@@ -193,17 +197,9 @@ getgenv().get_remote = function(remote_name)
         return;
     end);
     
-    setupvalue(area_client_connection_function, 4, "");
-    setupvalue(area_client_connection_function, 6, 0);
-    setupvalue(area_client_connection_function, 7, function() 
-        return c_yield(); 
-    end);
+    secure_call(area_client_remote_function, area_client, get_fake_area());
     
     while not remote do t_wait() end;
-
-    setupvalue(area_client_connection_function, 4, old_upvalues[4]);
-    setupvalue(area_client_connection_function, 6, old_upvalues[6]);
-    setupvalue(area_client_connection_function, 7, old_upvalues[7]);
 
     setupvalue(area_client_remote_function, 3, old_remote_upvalues[3]);
     setupvalue(area_client_remote_function, 5, old_remote_upvalues[5]);
@@ -211,5 +207,3 @@ getgenv().get_remote = function(remote_name)
 
     return remote;
 end;
-
-warn(("KeyHandler Bypass Loaded, Took %s"):format(tick() - start_time));
