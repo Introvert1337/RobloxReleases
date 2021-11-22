@@ -8,13 +8,13 @@ end;
 
 --// variables/localizations
 
-local getupvalue = getupvalue;
-local getupvalues = getupvalues;
-local setupvalue = setupvalue;
-local getinfo = getinfo;
+local getupvalue = getupvalue or debug.getupvalue;
+local getupvalues = getupvalues or debug.getupvalues;
+local setupvalue = setupvalue or debug.setupvalue;
+local getinfo = getinfo or debug.getinfo;
 local getconstants = getconstants or debug.getconstants;
-local islclosure = islclosure;
-local secure_call = syn.secure_call;
+local islclosure = islclosure or is_l_closure;
+local getnamecallmethod = getnamecallmethod;
 
 local t_find = table.find;
 local t_wait = task.wait;
@@ -25,11 +25,7 @@ local tonumber = tonumber;
 local run_service = game:GetService("RunService");
 local player = game:GetService("Players").LocalPlayer;
 
---// check if exploit is supported
-
-if not secure_call then 
-    return warn("exploit not supported (synapse x only)");
-end;
+assert(hookmetamethod, "Exploit not supported!")
 
 --// psu patcher (credit to sor) 
 
@@ -116,8 +112,6 @@ local start_time = tick();
 local dodge_fpe_key;
 
 repeat -- repeating a gc loop is usually bad it should be fine in this case considering it will probably only ever repeat once
-    wait(1);
-    
     for index, value in next, getgc() do 
         if islclosure(value) and getinfo(value).source:find("Input") then 
             local constants = getconstants(value);
@@ -139,6 +133,10 @@ repeat -- repeating a gc loop is usually bad it should be fine in this case cons
             end;
         end;
     end;
+    
+    if not dodge_fpe_key then 
+        wait(1);
+    end;
 until dodge_fpe_key;
 
 --// patch module and getkey function
@@ -149,32 +147,26 @@ patch_method(getupvalues(module), 1);
 local get_key = module()[1];
 patch_method(getupvalues(get_key), 2);
 
---// hook wait to stop detection loop in the areaclient script
+--// fetch remote functions
 
-local wait_hook;
-wait_hook = hookfunction(wait, function(t)
-    if getinfo(3).source:find("AreaClient") and not t then
-        return c_yield();
-    end;
-    
-    return wait_hook(t);
-end);
-
---// remote fetcher
-
-local area_client_remote_function;
+local area_client_connection_function, area_client_remote_function;
 
 repeat 
     for index, connection in next, getconnections(run_service.RenderStepped) do 
         local connection_function = connection.Function;
         
         if type(connection_function) == "function" and getinfo(connection_function).source:find("AreaClient") then 
-            area_client_remote_function = getupvalue(connection_function, 5);
+            area_client_connection_function = connection_function;
+            area_client_remote_function = getupvalue(area_client_connection_function, 5);
         end;
     end;
+    
+    if not (area_client_connection_function and area_client_remote_function) then 
+        wait(0.1);
+    end;
+until area_client_connection_function and area_client_remote_function;
 
-    t_wait();
-until area_client_remote_function;
+--// utilities 
 
 local area_markers_folder = workspace:WaitForChild("AreaMarkers");
 local area_client = player.PlayerGui:WaitForChild("AreaGui"):WaitForChild("AreaClient");
@@ -183,28 +175,62 @@ local function get_fake_area()
     local current_area = getupvalue(area_client_remote_function, 2);
     
     for index, area in next, area_markers_folder:GetChildren() do 
-        local area_name = area.Name;
-        
-        if area_name ~= current_area then 
-            return area_name;
+        if area.Name ~= current_area then 
+            return area;
         end;
     end;
 end;
 
+--// hook wait to stop detection loop in the areaclient script
+
+local wait_hook;
+wait_hook = hookfunction(wait, newcclosure(function(t)
+    if getinfo(3).source:find("AreaClient") and not t then
+        return c_yield();
+    end;
+    
+    return wait_hook(t);
+end));
+
+--// hook raycast to make fake area 
+
+local old_namecall;
+old_namecall = hookmetamethod(game, "__namecall", function(self, ...)
+    if self == workspace and getnamecallmethod() == "FindPartOnRayWithWhitelist" then 
+        if getinfo(3, "f").func == area_client_connection_function and getupvalue(area_client_connection_function, 6) == 0 then
+            local fake_area = get_fake_area();
+    
+            return fake_area, fake_area.Position, fake_area.Material;
+        end;
+    end;
+    
+    return old_namecall(self, ...);
+end);
+
+--// remote fetcher
+
 getgenv().get_remote = function(remote_name)
     local remote;
+    
+    local old_upvalues = getupvalues(area_client_connection_function);
     local old_remote_upvalues = getupvalues(area_client_remote_function);
     
-    setupvalue(area_client_remote_function, 5, remote_name == "Dodge" and dodge_fpe_key or remote_name);
-    setupvalue(area_client_remote_function, 6, function() end);
     setupvalue(area_client_remote_function, 3, function(fired_remote)
         remote = fired_remote;
-        return setupvalue(area_client_remote_function, 1, false);
+        setupvalue(area_client_remote_function, 1, false);
+    end);
+    setupvalue(area_client_remote_function, 5, remote_name == "Dodge" and dodge_fpe_key or remote_name);
+    setupvalue(area_client_remote_function, 6, function() end);
+    
+    setupvalue(area_client_connection_function, 6, 0);
+    setupvalue(area_client_connection_function, 7, function() 
+        return c_yield(); 
     end);
     
-    secure_call(area_client_remote_function, area_client, get_fake_area());
-    
     while not remote do t_wait() end;
+
+    setupvalue(area_client_connection_function, 6, old_upvalues[6]);
+    setupvalue(area_client_connection_function, 7, old_upvalues[7]);
 
     setupvalue(area_client_remote_function, 3, old_remote_upvalues[3]);
     setupvalue(area_client_remote_function, 5, old_remote_upvalues[5]);
@@ -212,3 +238,5 @@ getgenv().get_remote = function(remote_name)
 
     return remote;
 end;
+
+warn(("KeyHandler Bypass Loaded, Took %s"):format(tick() - start_time));
