@@ -25,7 +25,7 @@ local tonumber = tonumber;
 local run_service = game:GetService("RunService");
 local player = game:GetService("Players").LocalPlayer;
 
-assert(hookmetamethod, "Exploit not supported!")
+assert(hookmetamethod, "Exploit not supported!");
 
 --// psu patcher (credit to sor) 
 
@@ -34,7 +34,8 @@ local dependencies = { -- how to get dependencies values: https://pastebin.com/r
         next = "sBgaL",
         rB = -50014
     },
-    script_hash = "59b53f13c91177e3630a6e877d966ec5e272071125413b9f3c4604e824b8b6a1bb632563cc9ce33c70833edb032a6b06"
+    script_hash = "59b53f13c91177e3630a6e877d966ec5e272071125413b9f3c4604e824b8b6a1bb632563cc9ce33c70833edb032a6b06",
+    krnl_script_hash = "f8c2fd93150ab8ca3b35c3f5345b652973dd150d724f694a8fa2650fa6e58c54e8233055eaf74e807153f8e8abdd07c1"
 };
 
 local function patch_method(upvalues, method)
@@ -93,8 +94,9 @@ end;
 
 --// check if keyhandler updated
 
-local keyhandler = game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler");
-assert(getscripthash(keyhandler) == dependencies.script_hash, "keyhandler script updated!");
+local keyhandler = game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler");\
+local keyhandler_script_hash = getscripthash(keyhandler);
+assert(keyhandler_script_hash == dependencies.script_hash or keyhandler_script_hash == dependencies.krnl_script_hash, "keyhandler script updated!");
 
 --// wait until character spawned
 
