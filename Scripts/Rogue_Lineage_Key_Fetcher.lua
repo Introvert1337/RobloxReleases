@@ -8,10 +8,10 @@ end;
 
 --// variables/localizations
 
-local getupvalue = getupvalue or debug.getupvalue;
-local getupvalues = getupvalues or debug.getupvalues;
-local setupvalue = setupvalue or debug.setupvalue;
-local getinfo = getinfo or debug.getinfo;
+local getupvalue = getupvalue;
+local getupvalues = getupvalues;
+local setupvalue = setupvalue;
+local getinfo = getinfo;
 local getconstants = getconstants or debug.getconstants;
 local islclosure = islclosure;
 local secure_call = syn.secure_call;
@@ -25,6 +25,14 @@ local tonumber = tonumber;
 local run_service = game:GetService("RunService");
 local player = game:GetService("Players").LocalPlayer;
 
+--// check if exploit is supported
+
+if not secure_call then 
+    return warn("exploit not supported (synapse x only)");
+end;
+
+--// psu patcher (credit to sor) 
+
 local dependencies = { -- how to get dependencies values: https://pastebin.com/raw/jE9RQW82
     psu_struct = {
         next = "sBgaL",
@@ -32,8 +40,6 @@ local dependencies = { -- how to get dependencies values: https://pastebin.com/r
     },
     script_hash = "59b53f13c91177e3630a6e877d966ec5e272071125413b9f3c4604e824b8b6a1bb632563cc9ce33c70833edb032a6b06"
 };
-
---// method patcher (credit to sor for the patcher) 
 
 local function patch_method(upvalues, method)
     local instructions, stack;
