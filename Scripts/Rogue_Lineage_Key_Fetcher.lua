@@ -36,36 +36,7 @@ local dependencies = {
     script_hash = "1e619fe2ee00718f0b70188beb78d3bf96f1d86f12141482ddeddf2f1216853df4846eb43b10dcd04bd8b594b3122ff0"
 };
 
---// how to get dependencies values:
-
---[[
-    if not game:IsLoaded() then 
-        game.Loaded:Wait();
-    end;
-
-    local keyhandler = game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler");
-
-    local dependencies = {
-        keyhandler_code = decompile(keyhandler),
-        keyhandler_hash = getscripthash(keyhandler),
-        start_time = tick()
-    };
-
-    local psu_struct = {
-        next = "",
-        rB = ""
-    };
-
-    local pattern_values = {dependencies.keyhandler_code:match("v%d+%[.+%]%(%a%d+%(v%d+, [l__]?[-|+]?.*[__]?%d* %+ 1, [l__]?([-|+]?.*)[__]?%d*%[[l__]?([-|+]?.*)[__]?%d*%]%)%);")};
-
-    psu_struct.next = pattern_values[1]:match("%w+");
-    psu_struct.rB = pattern_values[2];
-
-    writefile("keyhandler_script.lua", dependencies.keyhandler_code);
-    writefile("keyhandler_psu_struct_output.txt", ("Date: %s\nScript Hash: %s\n\nPSU Struct:\n\nnext: %s\nrB: %s"):format(os.date(), dependencies.keyhandler_hash, psu_struct.next, psu_struct.rB));
-
-    warn(("completed in %s seconds!"):format(tick() - dependencies.start_time));
-]]
+--// how to get dependencies values: https://pastebin.com/raw/jE9RQW82
 
 --// method patcher (credit to sor for the patcher) 
 
