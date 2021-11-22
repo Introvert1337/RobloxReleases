@@ -94,7 +94,7 @@ end;
 
 --// check if keyhandler updated
 
-local keyhandler = game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler");\
+local keyhandler = game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Modules"):WaitForChild("KeyHandler");
 local keyhandler_script_hash = getscripthash(keyhandler);
 assert(keyhandler_script_hash == dependencies.script_hash or keyhandler_script_hash == dependencies.krnl_script_hash, "keyhandler script updated!");
 
