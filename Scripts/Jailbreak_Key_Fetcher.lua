@@ -1,9 +1,7 @@
 --// Game Loaded
 
-do 
-    if not game:IsLoaded() then 
-        game.Loaded:Wait();
-    end;
+if not game:IsLoaded() then 
+    game.Loaded:Wait();
 end;
 
 --// Services 
@@ -342,40 +340,32 @@ end;
 
 --// Reset Network
 
-do
-    setupvalue(dependencies.network.FireServer, 1, old_fire_server);
-end;
+setupvalue(dependencies.network.FireServer, 1, old_fire_server);
 
 --// Output Keys 
 
-do
-    if shared.output_keys then
-        rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - dependencies.start_time));
-        
-        for index, key in next, dependencies.network_keys do 
-            rconsoleprint(("%s : %s\n"):format(index, key));
-        end;
+if shared.output_keys then
+    rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - dependencies.start_time));
+
+    for index, key in next, dependencies.network_keys do 
+        rconsoleprint(("%s : %s\n"):format(index, key));
     end;
 end;
 
 --// Add Keys to Environment 
 
-do 
-    if shared.add_to_env then 
-        local environment = getgenv();
-    
-        environment.keys = dependencies.network_keys;
-        environment.network = dependencies.network;
-    end;
+if shared.add_to_env then 
+    local environment = getgenv();
+
+    environment.keys = dependencies.network_keys;
+    environment.network = dependencies.network;
 end;
 
 --// Check for Missing Keys 
 
-do 
-    for index, key_name in next, dependencies.keys_list do 
-        if not dependencies.network_keys[key_name] then 
-            rconsoleerr(("Failed to fetch key %s"):format(key_name));
-        end;
+for index, key_name in next, dependencies.keys_list do 
+    if not dependencies.network_keys[key_name] then 
+        rconsoleerr(("Failed to fetch key %s"):format(key_name));
     end;
 end;
 
