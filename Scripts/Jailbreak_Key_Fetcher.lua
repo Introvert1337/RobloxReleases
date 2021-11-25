@@ -123,9 +123,7 @@ do -- kick / carkick
     
         local old_environment = getfenv(kick_function);
 
-        setfenv(kick_function, {
-            pcall = function() return false end;
-        });
+        setfenv(kick_function, {pcall = function() return false end});
     
         pcall(kick_function);
     
@@ -178,10 +176,7 @@ do -- taze
 
     functions.mark_function(taze_function, "Taze");
 
-    setupvalue(taze_function, 1, {
-        getAttr = function() return 0; end;
-        setAttr = function() end;
-    });
+    setupvalue(taze_function, 1, {getAttr = function() return 0; end, setAttr = function() end});
     setupvalue(taze_function, 2, {ObjectLocal = function() end});
     setupvalue(taze_function, 3, {GetPlayers = function() return {}; end});
     setupvalue(taze_function, 5, {RayIgnoreNonCollideWithIgnoreList = function() return true; end});
@@ -211,11 +206,7 @@ do -- playsound
                     functions.mark_function(play_sound_function, "PlaySound");
 
                     local old_upvalue = getupvalue(play_sound_function, 2);
-                    setupvalue(play_sound_function, 2, setmetatable({}, {
-                        __index = function() 
-                            return function() end;
-                        end;
-                    }));
+                    setupvalue(play_sound_function, 2, setmetatable({}, {__index = function() return function() end; end}));
 
                     pcall(play_sound_function, nil, nil);
 
