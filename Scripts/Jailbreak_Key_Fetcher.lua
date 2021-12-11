@@ -366,15 +366,15 @@ local console_created, console_named = false, false; -- i hate scriptware's cons
 for index, key_name in next, dependencies.keys_list do 
     if not dependencies.network_keys[key_name] then 
     	if rconsolecreate and not console_created and not shared.output_keys then 
-			console_created = true; 
-			rconsolecreate();
-			rconsolename("Jailbreak Key Fetcher");
-		end; 
+	    console_created = true; 
+	    rconsolecreate();
+	    rconsolename("Jailbreak Key Fetcher");
+	end; 
     
         rconsoleerr(("Failed to fetch key %s"):format(key_name));
 
         if not console_created and not console_named and not shared.output_keys then 
-        	console_named = true;
+	    console_named = true;
             rconsolename("Jailbreak Key Fetcher");
         end;
     end;
