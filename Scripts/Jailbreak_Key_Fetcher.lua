@@ -18,9 +18,16 @@ local getconnections = getconnections;
 local islclosure = islclosure;
 
 local require = require;
+local tostring = tostring;
 local pcall = pcall;
-local t_find = table.find;
-local v3_new = Vector3.new;
+local table_find = table.find;
+local vector3_new = Vector3.new;
+
+local rconsoleprint = rconsoleprint;
+local rconsolename = rconsolename or rconsolesettitle;
+local rconsolecreate = rconsolecreate;
+local rconsolewarn = rconsolewarn or function(...) rconsoleprint(tostring(...), "yellow") end;
+local rconsolerrr = rconsolerrr or function(...) rconsoleprint(tostring(...), "red") end;
 
 --// Init Variables 
 
@@ -185,7 +192,7 @@ do -- taze
     pcall(taze_function, {
         ItemData = {NextUse = 0}, CrossHair = {Flare = function() end, Spring = {Accelerate = function() end}}, 
         Config = {Sound = {tazer_buzz = 0}, ReloadTime = 0, ReloadTimeHit = 0}, IgnoreList = {}, Draw = function() end, BroadcastInputBegan = function() end, 
-        UpdateMousePosition = function() end, Tip = {Position = v3_new(0, 0, 0)}, Local = true, MousePosition = v3_new(0, 0, 0)
+        UpdateMousePosition = function() end, Tip = {Position = vector3_new()}, Local = true, MousePosition = vector3_new()
     });
 
     setupvalue(taze_function, 1, old_upvalues[1]); 
@@ -199,9 +206,9 @@ do -- playsound
     for index, connection in next, getconnections(game:GetService("RunService").Heartbeat) do 
         local connection_function = connection.Function;
         
-        if type(connection_function) == "function" and t_find(getconstants(connection_function), "Vehicle Heartbeat") then 
+        if type(connection_function) == "function" and table_find(getconstants(connection_function), "Vehicle Heartbeat") then 
             for index, upvalue in next, getupvalues(connection_function) do 
-                if type(upvalue) == "function" and islclosure(upvalue) and t_find(getconstants(upvalue), "NitroLoop") then 
+                if type(upvalue) == "function" and islclosure(upvalue) and table_find(getconstants(upvalue), "NitroLoop") then 
                     local play_sound_function = getupvalue(upvalue, 1);
                     functions.mark_function(play_sound_function, "PlaySound");
 
@@ -331,6 +338,11 @@ setupvalue(dependencies.network.FireServer, 1, old_fire_server);
 --// Output Keys 
 
 if shared.output_keys then
+    if rconsolecreate then 
+        rconsolecreate();
+    end; 
+    
+    rconsolename("Jailbreak Key Fetcher");
     rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - dependencies.start_time));
 
     for index, key in next, dependencies.network_keys do 
@@ -349,9 +361,22 @@ end;
 
 --// Check for Missing Keys 
 
+local console_created, console_named = false, false; -- i hate scriptware's console system lol
+
 for index, key_name in next, dependencies.keys_list do 
     if not dependencies.network_keys[key_name] then 
+    	if rconsolecreate and not console_created and not shared.output_keys then 
+			console_created = true; 
+			rconsolecreate();
+			rconsolename("Jailbreak Key Fetcher");
+		end; 
+    
         rconsoleerr(("Failed to fetch key %s"):format(key_name));
+
+        if not console_created and not console_named and not shared.output_keys then 
+        	console_named = true;
+            rconsolename("Jailbreak Key Fetcher");
+        end;
     end;
 end;
 
