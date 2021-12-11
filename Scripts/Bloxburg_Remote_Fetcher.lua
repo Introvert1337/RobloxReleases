@@ -1,17 +1,3 @@
--- i released this to the bloxburg epic thing server (discord.gg/bloxburgepicthing) a while back, posting it here now
--- this is the only script i actually fully commented lol
-
---// localizations
-
-local getupvalue = getupvalue or debug.getupvalue;
-local getinfo = getinfo or debug.getinfo;
-local islclosure = islclosure or is_l_closure;
-local getreg = getreg or debug.getregistry;
-local getconstants = getconstants or debug.getconstants;
-
-local type = type;
-local tostring = tostring;
-
 --// variables 
 
 local remotes = {}; -- table that remotes will be stored in with name index
@@ -49,8 +35,6 @@ local function call_remote(name, arguments)
             return remote_instance:InvokeServer(arguments); -- invokes remote with specified arguments
         end;
     end;
-    
-    return false; -- returns false if something fails
 end;
 
 --// example
