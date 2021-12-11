@@ -8,7 +8,7 @@ local valid_env = getupvalue(remote_function, 2);
 	
 --// bypass env checks
 
-replaceclosure(getfenv(remote_function).getfenv, newcclosure(function(level)
+replaceclosure(getfenv(remote_function).getfenv, newcclosure(function()
     return valid_env;
 end));
 
