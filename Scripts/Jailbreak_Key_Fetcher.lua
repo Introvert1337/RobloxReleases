@@ -4,30 +4,11 @@ if not game:IsLoaded() then
     game.Loaded:Wait();
 end;
 
---// Localizations 
+--// Exploit Support 
 
-local getupvalue = getupvalue or debug.getupvalue;
-local setupvalue = setupvalue or debug.setupvalue;
-local getupvalues = getupvalues or debug.getupvalues;
-local setconstant = setconstant or debug.setconstant;
-local getconstants = getconstants or debug.getconstants;
-local getinfo = getinfo or debug.getinfo;
-local getproto = getproto or debug.getproto;
-local checkcaller = checkcaller;
-local getconnections = getconnections;
-local islclosure = islclosure;
-
-local require = require;
-local tostring = tostring;
-local pcall = pcall;
-local table_find = table.find;
-local vector3_new = Vector3.new;
-
-local rconsoleprint = rconsoleprint;
 local rconsolename = rconsolename or rconsolesettitle;
-local rconsolecreate = rconsolecreate;
-local rconsolewarn = rconsolewarn or function(...) rconsoleprint(tostring(...), "yellow") end;
-local rconsolerrr = rconsolerrr or function(...) rconsoleprint(tostring(...), "red") end;
+local rconsolewarn = rconsolewarn or function(text) rconsoleprint(text, "yellow") end;
+local rconsoleerr = rconsoleerr or function(text) rconsoleprint(text, "red") end;
 
 --// Init Variables 
 
@@ -35,22 +16,25 @@ local replicated_storage = game:GetService("ReplicatedStorage");
 local players = game:GetService("Players");
 local collection_service = game:GetService("CollectionService");
 
+local game_folder = replicated_storage:WaitForChild("Game");
+local item_folder = game_folder:WaitForChild("Item");
+
 local dependencies = {
-    network = getupvalue(require(replicated_storage.Module.AlexChassis).SetEvent, 1),
+    network = getupvalue(require(replicated_storage:WaitForChild("Module"):WaitForChild("AlexChassis")).SetEvent, 1),
     start_time = tick(),
     marked_functions = {},
     network_keys = {},
     keys_list = {"Punch", "Hijack", "Kick", "CarKick", "FallDamage", "SwitchTeam", "BroadcastInputBegan", "BroadcastInputEnded", "Arrest", "Eject", "EnterCar", "ExitCar", "SwitchTeam", "PlaySound", "SpawnCar", "RedeemCode"};
     modules = {
-        default_actions = require(replicated_storage.Game.DefaultActions),
-        military_turret_system = require(replicated_storage.Game.MilitaryTurret.MilitaryTurretSystem),
-        team_choose_ui = require(replicated_storage.Game.TeamChooseUI),
-        item_system = require(replicated_storage.Game.ItemSystem.ItemSystem),
-        taser = require(replicated_storage.Game.Item.Taser),
-        gun = require(replicated_storage.Game.Item.Gun),
-        falling = require(replicated_storage.Game.Falling),
-        garage_ui = require(replicated_storage.Game.Garage.GarageUI),
-        codes = require(replicated_storage.Game.Codes)
+        default_actions = require(game_folder:WaitForChild("DefaultActions")),
+        military_turret_system = require(game_folder:WaitForChild("MilitaryTurret"):WaitForChild("MilitaryTurretSystem")),
+        team_choose_ui = require(game_folder:WaitForChild("TeamChooseUI")),
+        item_system = require(game_folder:WaitForChild("ItemSystem"):WaitForChild("ItemSystem")),
+        taser = require(item_folder:WaitForChild("Taser")),
+        gun = require(item_folder:WaitForChild("Gun")),
+        falling = require(game_folder:WaitForChild("Falling")),
+        garage_ui = require(game_folder:WaitForChild("Garage"):WaitForChild("GarageUI")),
+        codes = require(game_folder:WaitForChild("Codes"))
     };
 };
 
@@ -192,7 +176,7 @@ do -- taze
     pcall(taze_function, {
         ItemData = {NextUse = 0}, CrossHair = {Flare = function() end, Spring = {Accelerate = function() end}}, 
         Config = {Sound = {tazer_buzz = 0}, ReloadTime = 0, ReloadTimeHit = 0}, IgnoreList = {}, Draw = function() end, BroadcastInputBegan = function() end, 
-        UpdateMousePosition = function() end, Tip = {Position = vector3_new()}, Local = true, MousePosition = vector3_new()
+        UpdateMousePosition = function() end, Tip = {Position = Vector3.new(0, 0, 0)}, Local = true, MousePosition = Vector3.new(0, 0, 0)
     });
 
     setupvalue(taze_function, 1, old_upvalues[1]); 
@@ -203,13 +187,15 @@ do -- taze
 end;
 
 do -- playsound 
+    local play_sound_function;
+    
     for index, connection in next, getconnections(game:GetService("RunService").Heartbeat) do 
         local connection_function = connection.Function;
         
-        if type(connection_function) == "function" and table_find(getconstants(connection_function), "Vehicle Heartbeat") then 
+        if type(connection_function) == "function" and table.find(getconstants(connection_function), "Vehicle Heartbeat") then 
             for index, upvalue in next, getupvalues(connection_function) do 
-                if type(upvalue) == "function" and islclosure(upvalue) and table_find(getconstants(upvalue), "NitroLoop") then 
-                    local play_sound_function = getupvalue(upvalue, 1);
+                if type(upvalue) == "function" and islclosure(upvalue) and table.find(getconstants(upvalue), "NitroLoop") then 
+                    play_sound_function = getupvalue(upvalue, 1);
                     functions.mark_function(play_sound_function, "PlaySound");
 
                     local old_upvalue = getupvalue(play_sound_function, 2);
@@ -218,8 +204,14 @@ do -- playsound
                     pcall(play_sound_function, nil, nil);
 
                     setupvalue(play_sound_function, 2, old_upvalue);
+                    
+                    break;
                 end;
             end;
+        end;
+        
+        if play_sound_function then 
+            break 
         end;
     end;
 end;
@@ -337,46 +329,22 @@ setupvalue(dependencies.network.FireServer, 1, old_fire_server);
 
 --// Output Keys 
 
-if shared.output_keys then
-    if rconsolecreate then 
-        rconsolecreate();
-    end; 
-    
-    rconsolename("Jailbreak Key Fetcher");
-    rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - dependencies.start_time));
+if rconsolecreate then 
+    rconsolecreate()
+end 
 
-    for index, key in next, dependencies.network_keys do 
-        rconsoleprint(("%s : %s\n"):format(index, key));
-    end;
-end;
+rconsolename("Jailbreak Key Fetcher");
+rconsolewarn(("Took %s seconds to grab keys!\n"):format(tick() - dependencies.start_time));
 
---// Add Keys to Environment 
-
-if shared.add_to_env then 
-    local environment = getgenv();
-
-    environment.keys = dependencies.network_keys;
-    environment.network = dependencies.network;
+for index, key in next, dependencies.network_keys do 
+    rconsoleprint(("%s : %s\n"):format(index, key));
 end;
 
 --// Check for Missing Keys 
 
-local console_created, console_named = false, false; -- i hate scriptware's console system lol
-
 for index, key_name in next, dependencies.keys_list do 
     if not dependencies.network_keys[key_name] then 
-    	if rconsolecreate and not console_created and not shared.output_keys then 
-	    console_created = true; 
-	    rconsolecreate();
-	    rconsolename("Jailbreak Key Fetcher");
-	end; 
-    
         rconsoleerr(("Failed to fetch key %s"):format(key_name));
-
-        if not console_created and not console_named and not shared.output_keys then 
-	    console_named = true;
-            rconsolename("Jailbreak Key Fetcher");
-        end;
     end;
 end;
 
