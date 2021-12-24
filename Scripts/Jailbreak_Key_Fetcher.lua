@@ -16,25 +16,27 @@ local replicated_storage = game:GetService("ReplicatedStorage");
 local players = game:GetService("Players");
 local collection_service = game:GetService("CollectionService");
 
+local player = players.LocalPlayer;
+
 local game_folder = replicated_storage:WaitForChild("Game");
 local item_folder = game_folder:WaitForChild("Item");
 
 local dependencies = {
-    network = getupvalue(require(replicated_storage:WaitForChild("Module"):WaitForChild("AlexChassis")).SetEvent, 1),
+    network = getupvalue(require(replicated_storage:WaitForChild("Module").AlexChassis).SetEvent, 1),
     start_time = tick(),
     marked_functions = {},
     network_keys = {},
-    keys_list = {"Punch", "Hijack", "Kick", "CarKick", "FallDamage", "SwitchTeam", "BroadcastInputBegan", "BroadcastInputEnded", "Arrest", "Eject", "EnterCar", "ExitCar", "SwitchTeam", "PlaySound", "SpawnCar", "RedeemCode"};
+    keys_list = {"Punch", "Hijack", "Kick", "FallDamage", "SwitchTeam", "BroadcastInputBegan", "BroadcastInputEnded", "Arrest", "Eject", "EnterCar", "ExitCar", "PlaySound", "SpawnCar", "RedeemCode"};
     modules = {
-        default_actions = require(game_folder:WaitForChild("DefaultActions")),
-        military_turret_system = require(game_folder:WaitForChild("MilitaryTurret"):WaitForChild("MilitaryTurretSystem")),
-        team_choose_ui = require(game_folder:WaitForChild("TeamChooseUI")),
-        item_system = require(game_folder:WaitForChild("ItemSystem"):WaitForChild("ItemSystem")),
-        taser = require(item_folder:WaitForChild("Taser")),
-        gun = require(item_folder:WaitForChild("Gun")),
-        falling = require(game_folder:WaitForChild("Falling")),
-        garage_ui = require(game_folder:WaitForChild("Garage"):WaitForChild("GarageUI")),
-        codes = require(game_folder:WaitForChild("Codes"))
+        default_actions = require(game_folder.DefaultActions),
+        military_turret_system = require(game_folder.MilitaryTurret.MilitaryTurretSystem),
+        team_choose_ui = require(game_folder.TeamChooseUI),
+        item_system = require(game_folder.ItemSystem.ItemSystem),
+        taser = require(item_folder.Taser),
+        gun = require(item_folder.Gun),
+        falling = require(game_folder.Falling),
+        spawn_ui = require(game_folder.Garage.GarageUI.SpawnUI),
+        codes = require(game_folder.Codes)
     };
 };
 
@@ -102,31 +104,20 @@ do -- punch
     end;
 end;
 
-do -- kick / carkick
+do -- kick
     local connection = getconnections(collection_service:GetInstanceRemovedSignal("Door"))[1].Function;
-    local functions_table = getupvalue(getupvalue(getupvalue(getupvalue(connection, 2), 2).Run, 1), 1);
+    local kick_function = getupvalue(getupvalue(getupvalue(getupvalue(connection, 2), 2).Run, 1), 1)[4].c;
 
-    local car_kick_function = getproto(functions_table[3].c, 1);
-    local kick_function = functions_table[4].c;
+    functions.mark_function(kick_function, "Kick");
 
-    do -- kick
-        functions.mark_function(kick_function, "Kick");
-    
-        local old_environment = getfenv(kick_function);
+    local old_environment = getfenv(kick_function);
 
-        setfenv(kick_function, {pcall = function() return false end});
-    
-        pcall(kick_function);
-    
-        setupvalue(kick_function, 2, false);
-        setfenv(kick_function, old_environment);
-    end;
+    setfenv(kick_function, {pcall = function() return false end});
 
-    do -- carkick
-        functions.hook_fire_server(car_kick_function, 1, "CarKick");
+    pcall(kick_function);
 
-        pcall(car_kick_function);
-    end;
+    setupvalue(kick_function, 2, false);
+    setfenv(kick_function, old_environment);
 end;
 
 do -- damage
@@ -138,27 +129,53 @@ do -- damage
 end;
 
 do -- switchteam
-    local switch_team_function = getproto(dependencies.modules.team_choose_ui.Show, 4);
+    local connection = getconnections(dependencies.modules.team_choose_ui.Gui.Container.ContainerTeam.Police.MouseButton1Down)[1].Function;
+    local switch_team_function = getupvalue(connection, 4);
+    local old_upvalue = getupvalue(switch_team_function, 1);
 
-    functions.hook_fire_server(switch_team_function, 2, "SwitchTeam");
+    functions.mark_function(switch_team_function, "SwitchTeam");
+    
+    setupvalue(switch_team_function, 1, 1);
 
     pcall(switch_team_function);
+
+    setupvalue(switch_team_function, 1, old_upvalue);
 end;
 
 do -- broadcastinputbegan / broadcastinputended
     local equip_function = dependencies.modules.item_system._equip;
-    local input_began_function = getproto(equip_function, 5);
-    local input_ended_function = getproto(equip_function, 6);
+    local old_upvalues = getupvalues(equip_function);
+    
+    setupvalue(equip_function, 1, {getName = function() return "gamer" end});
+    setupvalue(equip_function, 2, {gamer = {new = function()
+        return setmetatable({Local = true, ShootBegin = true, Maid = {GiveTask = function() end}}, {
+            __newindex = function(self, index, value)
+                if index == "BroadcastInputBegan" then 
+                    functions.mark_function(value, "BroadcastInputBegan");
+                    pcall(value, true, {});
+                elseif index == "BroadcastInputEnded" then 
+                    functions.mark_function(value, "BroadcastInputEnded");
+                    pcall(value, true, {});
+                end;
+                
+                return rawset(self, index, value);
+            end;
+        });
+    end}});
+    setupvalue(equip_function, 3, {});
+    setupvalue(equip_function, 4, {
+        GetKeysPressed = function() return {} end, GetMouseButtonsPressed = function() return {} end, 
+        InputBegan = {Connect = function() end}, InputEnded = {Connect = function() end}
+    });
+    setupvalue(equip_function, 7, {OnLocalItemEquipped = {Fire = function() end}});
 
-    do -- broadcastinputbegan
-        functions.hook_fire_server(input_began_function, 1, "BroadcastInputBegan");
-        pcall(input_began_function, true, {});
+    pcall(equip_function, true, {Name = "gamer"});
+
+    for index = 1, 4 do 
+        setupvalue(equip_function, index, old_upvalues[index]);
     end;
 
-    do -- broadcastinputended
-        functions.hook_fire_server(input_ended_function, 1, "BroadcastInputEnded");
-        pcall(input_ended_function, true, {});
-    end;
+    setupvalue(equip_function, 7, old_upvalues[7]);
 end;
 
 do -- taze
@@ -304,23 +321,28 @@ do -- exitcar
     setupvalue(exit_car_function, 6, old_upvalues[6]);
 end;
 
-do -- spawncar (given to me by Tazed#8126)
-    local spawn_car_function = getproto(dependencies.modules.garage_ui.Init, 3);
+do -- spawncar
+    local spawn_car_function = dependencies.modules.spawn_ui.OnItemSpawnClick._handlerListHead._fn;
 
-    functions.hook_fire_server(spawn_car_function, 1, "SpawnCar");
+    functions.mark_function(spawn_car_function, "SpawnCar");
 
     pcall(spawn_car_function, {});
 end;
 
 do -- redeemcode
-    local redeem_code_function = getproto(dependencies.modules.codes.Init, 4);
+    local redeem_code_function = getconnections(player.PlayerGui:WaitForChild("CodesGui").CodeContainer.Background.Redeem.MouseButton1Down)[1].Function;
+    
+    functions.mark_function(redeem_code_function, "RedeemCode");
+    
+    local old_upvalues = getupvalues(redeem_code_function);
     
     setupvalue(redeem_code_function, 1, {CodeContainer = {Background = {CodeContainer = {Code = {Text = " "}}}}});
-    setupvalue(redeem_code_function, 3, {WindowClose = function() end})
-    
-    functions.hook_fire_server(redeem_code_function, 2, "RedeemCode");
+    setupvalue(redeem_code_function, 3, {WindowClose = function() end});
     
     pcall(redeem_code_function);
+
+    setupvalue(redeem_code_function, 1, old_upvalues[1]);
+    setupvalue(redeem_code_function, 3, old_upvalues[3]);
 end;
 
 --// Reset Network
