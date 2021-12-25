@@ -26,10 +26,10 @@ local dependencies = {
     start_time = tick(),
     marked_functions = {},
     network_keys = {},
-    keys_list = {"Punch", "Hijack", "Kick", "FallDamage", "SwitchTeam", "BroadcastInputBegan", "BroadcastInputEnded", "Arrest", "Eject", "EnterCar", "ExitCar", "PlaySound", "SpawnCar", "RedeemCode"};
+    keys_list = {"Punch", "Hijack", "Kick", "FallDamage", "SwitchTeam", "BroadcastInputBegan", "BroadcastInputEnded", "Arrest", "Eject", "EnterCar", "ExitCar", "PlaySound", "SpawnCar", "RedeemCode", "Damage"};
     modules = {
         default_actions = require(game_folder.DefaultActions),
-        military_turret_system = require(game_folder.MilitaryTurret.MilitaryTurretSystem),
+        military_turret_binder = require(game_folder.MilitaryTurret.MilitaryTurretBinder),
         team_choose_ui = require(game_folder.TeamChooseUI),
         item_system = require(game_folder.ItemSystem.ItemSystem),
         taser = require(item_folder.Taser),
@@ -121,11 +121,15 @@ do -- kick
 end;
 
 do -- damage
-    local damage_function = getproto(getproto(dependencies.modules.military_turret_system.init, 1), 1);
+    local military_turret_connection = dependencies.modules.military_turret_binder._classAddedSignal._handlerListHead._fn;
 
-    functions.hook_fire_server(damage_function, 1, "Damage");
-
-    pcall(damage_function);
+    pcall(military_turret_connection, {
+        _maid = {GiveTask = function() end}, 
+        onBulletHit = {Connect = function(self, connection_callback)
+            functions.mark_function(connection_callback, "Damage");
+            pcall(connection_callback);
+        end}
+    });
 end;
 
 do -- switchteam
@@ -150,11 +154,8 @@ do -- broadcastinputbegan / broadcastinputended
     setupvalue(equip_function, 2, {gamer = {new = function()
         return setmetatable({Local = true, ShootBegin = true, Maid = {GiveTask = function() end}}, {
             __newindex = function(self, index, value)
-                if index == "BroadcastInputBegan" then 
-                    functions.mark_function(value, "BroadcastInputBegan");
-                    pcall(value, true, {});
-                elseif index == "BroadcastInputEnded" then 
-                    functions.mark_function(value, "BroadcastInputEnded");
+                if index == "BroadcastInputBegan" or index == "BroadcastInputEnded" then 
+                    functions.mark_function(value, index);
                     pcall(value, true, {});
                 end;
                 
