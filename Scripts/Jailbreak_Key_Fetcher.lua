@@ -54,24 +54,26 @@ local functions = {
     end
 };
 
---// Network Hook (credit to senser for the "marking" method)
+--// Network Hook
 
 local old_fire_server = getupvalue(dependencies.network.FireServer, 1);
 
 setupvalue(dependencies.network.FireServer, 1, function(key, ...)
-    local caller_info = getinfo(2, "f").func;
-        
-    if caller_info == dependencies.network.FireServer then 
-        caller_info = getinfo(3, "f").func;
-    end;
+    if checkcaller() then
+        local caller_info = getinfo(2, "f").func;
 
-    local mark_info = dependencies.marked_functions[caller_info];
+        if caller_info == dependencies.network.FireServer then 
+            caller_info = getinfo(3, "f").func;
+        end;
 
-    if mark_info and checkcaller() then 
-        dependencies.network_keys[mark_info.name] = key;
-        dependencies.marked_functions[caller_info] = nil;
+        local mark_info = dependencies.marked_functions[caller_info];
 
-        return;
+        if mark_info then 
+            dependencies.network_keys[mark_info.name] = key;
+            dependencies.marked_functions[caller_info] = nil;
+
+            return;
+        end;
     end;
 
     return old_fire_server(key, ...);
