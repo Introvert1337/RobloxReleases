@@ -8,8 +8,6 @@ do -- hooks
             elseif url == "https://whitelist.hydrahub.net/api/mYq3t6w9" then
                 return {Body = "22cca489bad9cfe5a7a6cb217767e4d895d3a5bd18b9c2d7c57ed8f7dc6ef6c1"}; -- static response with spoofed time and random values
             end;
-            
-            warn("unhandled request"); -- if there is a url not hooked
         end));
     end;
     
