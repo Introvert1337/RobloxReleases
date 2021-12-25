@@ -108,6 +108,28 @@ local function hash(msg, t)
     return str2hexa(num2s(H[1], 4) .. num2s(H[2], 4) .. num2s(H[3], 4) .. num2s(H[4], 4) .. num2s(H[5], 4) .. num2s(H[6], 4) .. num2s(H[7], 4) .. num2s(H[8], 4))
 end
 
-return function(secret, data)
+local function hmac(secret, data)
     return hash(secret .. data .. secret)
 end
+
+function uniform_rng(a, b)
+    a1 = 48718057
+        a2 = 58305628
+
+    b1 = 108466472
+        b2 = 1090878788885
+
+    x1 = a
+        x2 = b
+
+    r1 = (x2 * a2)
+    r2 = (x1 * a2 + x2 * a1) % b1
+    r2 = (r2 * b1 + r2) % b2
+
+    x1 = math.floor(r2 / b1)
+    x2 = r2 - x1 * b1
+
+    return math.floor((r2 / b2) * math.pow(10, 12))
+end
+
+return hmac, uniform_rng
