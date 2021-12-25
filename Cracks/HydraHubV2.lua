@@ -30,3 +30,4 @@ do -- hooks
 end;
 
 getgenv().Key = "SO1WxX4QetzX878m"; -- this key is a part of the response
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Introvert1337/RandomStuff/main/hydra.lua"))();
