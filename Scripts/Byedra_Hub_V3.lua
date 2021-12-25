@@ -1,10 +1,6 @@
 do -- hooks
     do -- syn.request
-        local syn_request = syn.request;
-        
-        make_writeable(syn);
-        
-        syn.request = newcclosure(function(payload)
+       replaceclosure(syn.request, newcclosure(function(payload)
             local url = payload.Url;
             
             if url == "https://whitelist.hydrahub.net/api/dSgVkYp2" then 
@@ -14,9 +10,7 @@ do -- hooks
             end;
             
             warn("unhandled request"); -- if there is a url not hooked
-        end); 
-        
-        make_readonly(syn);
+        end));
     end;
     
     do -- os.time
