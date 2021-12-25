@@ -60,17 +60,17 @@ local old_fire_server = getupvalue(dependencies.network.FireServer, 1);
 
 setupvalue(dependencies.network.FireServer, 1, function(key, ...)
     if checkcaller() then
-        local caller_info = getinfo(2, "f").func;
+        local caller_function = getinfo(2, "f").func;
 
-        if caller_info == dependencies.network.FireServer then 
-            caller_info = getinfo(3, "f").func;
+        if caller_function == dependencies.network.FireServer then 
+            caller_function = getinfo(3, "f").func;
         end;
 
-        local mark_info = dependencies.marked_functions[caller_info];
+        local mark_info = dependencies.marked_functions[caller_function];
 
         if mark_info then 
             dependencies.network_keys[mark_info.name] = key;
-            dependencies.marked_functions[caller_info] = nil;
+            dependencies.marked_functions[caller_function] = nil;
 
             return;
         end;
