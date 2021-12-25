@@ -13,33 +13,18 @@ do -- hooks
         end));
     end;
     
-    do -- os.time
-        local os_time_checkpoint = 1640302130;
-        
-        local old_os_time; 
-        old_os_time = replaceclosure(os.time, newcclosure(function()
+    do -- tostring (i have a ver that hooks os.time and math.random but this is shorter)
+        local old_tostring; 
+        old_tostring = replaceclosure(tostring, newcclosure(function(data)
             if checkcaller() then 
-                os_time_checkpoint = os_time_checkpoint + 1; -- checks if os.time changes after a second
-                        
-                return os_time_checkpoint;
+                if data == 1 or data == 2 or data == 3 then -- tostring on math.random(1, 3)
+                    return "2";
+                elseif data == os.time() then -- tostring on os.time()
+                    return "1640302130";
+                end;
             end; 
-            
-            return old_os_time();
-        end));
-    end;
-    
-    do -- math.random
-        local math_random_check = false;
-        
-        local old_math_random; 
-        old_math_random = replaceclosure(math.random, newcclosure(function(...)
-            if not math_random_check and checkcaller() then 
-                math_random_check = true; -- spams math.random and checks if they're the same (dumb check)
-            
-                return 2;
-            end; 
-            
-            return old_math_random(...);
+
+            return old_tostring(data);
         end));
     end;
 end;
