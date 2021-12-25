@@ -13,7 +13,7 @@ do -- hooks
         end));
     end;
     
-    do -- tostring
+    do -- tostring (i have a os.time and math.random hook but this is shorter and avoids the dumb checks)
         local old_tostring; 
         old_tostring = replaceclosure(tostring, newcclosure(function(data)
             if checkcaller() then 
