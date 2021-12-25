@@ -13,7 +13,7 @@ do -- hooks
         end));
     end;
     
-    do -- tostring (i have a ver that hooks os.time and math.random but this is shorter)
+    do -- tostring
         local old_tostring; 
         old_tostring = replaceclosure(tostring, newcclosure(function(data)
             if checkcaller() then 
