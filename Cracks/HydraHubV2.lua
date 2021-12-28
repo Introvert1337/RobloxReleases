@@ -23,7 +23,16 @@ do
             };
         end;
         
-        error("unhandled request");
+        error("unhandled syn request");
+    end));
+    
+    local old_httpget;
+    old_httpget = replaceclosure(game.HttpGet, newcclosure(function(self, url, ...)
+        if url == "https://raw.githubusercontent.com/HydraVirgo/hydrahubv2/main/funloadstring" then 
+            return old_httpget(self, "https://raw.githubusercontent.com/Introvert1337/RobloxReleases/master/Cracks/Dependencies/HydraHub/UILibrary.lua", ...);
+        end;
+        
+        error("unhandled http request");
     end));
 end;
 
