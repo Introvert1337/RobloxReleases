@@ -41,7 +41,7 @@ game:GetService("Players").LocalPlayer.PlayerGui.ChildAdded:Connect(function(chi
                 -- press the correct answer button after a randomized delay 
                 
                 wait(math.random(3, 5));
-                firesignal(answer_button.MouseButton1Click);
+                for i,v in pairs(getconnections(answer_button.MouseButton1Click)) do v:Fire() end
             end;
         end;
     end;
