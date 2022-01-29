@@ -10,7 +10,7 @@ local accuracy_bounds = {
 
 local accuracy_names = {"Perfect", "Great", "Okay"};
 
-local accuracy = shared.accuracy;
+local accuracy = shared.accuracy or "Perfect"; -- Perfect, Great, Okay, Random
 local note_time_target = accuracy_bounds[accuracy];
 
 local track_system;
@@ -116,7 +116,7 @@ track_system.new = function(...)
                                 
                                 session:debug_any_press();
                                 
-                                if rawget(note, "get_time_to_end") then 
+                                if rawget(note, "get_time_to_end") then -- if its not a long note then release right after
                                     delay(math.random(5, 18) / 100, function()
                                         release_track(local_track_system, session, note_track_index);
                                     end);
