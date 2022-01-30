@@ -1,11 +1,10 @@
 --// variables 
 
 local keys, network = loadstring(game:HttpGet("https://raw.githubusercontent.com/Introvert1337/RobloxReleases/main/Scripts/Jailbreak/KeyFetcher.lua"))();
-local game_folder = game:GetService("ReplicatedStorage").Game;
 
 --// no fall damage / no ragdoll
 
-local player_utils = require(game_folder.PlayerUtils);
+local player_utils = require(game:GetService("ReplicatedStorage").Game.PlayerUtils);
 
 local old_is_point_in_tag = player_utils.isPointInTag;
 player_utils.isPointInTag = function(point, tag)
