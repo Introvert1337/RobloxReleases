@@ -4,7 +4,7 @@ local song_speed = shared.song_speed or 2;
 
 local camera = workspace.CurrentCamera;
 
---// grab dependecies and main hook 
+--// main hook and connection
 
 for index, module in next, getloadedmodules() do 
     local module_data = require(module);
