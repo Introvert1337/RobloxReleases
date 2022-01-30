@@ -29,7 +29,7 @@ game:GetService("Players").LocalPlayer.PlayerGui.ChildAdded:Connect(function(chi
             local answer_button = choice_frame.Options:FindFirstChild(tostring(answer));
             
             if answer_button then
-                wait(math.random(3, 5)); -- delay to make it more legit
+                task.wait(math.random(3, 5)); -- delay to make it more legit
                 
                 for index, connection in next, getconnections(answer_button.MouseButton1Click) do
                     connection:Fire(); -- firesignal can be detected
