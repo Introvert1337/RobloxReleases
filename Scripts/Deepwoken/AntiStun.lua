@@ -1,3 +1,5 @@
+--// variables
+
 local stun_class_names = {
     ["PreventAction"] = true,
     ["OffhandAttack"] = true,
@@ -17,6 +19,8 @@ local stun_class_names = {
 };
 
 local effects_table = require(game:GetService("ReplicatedStorage").EffectReplicator).Effects;
+
+--// main hook 
 
 local old_pairs
 old_pairs = replaceclosure(pairs, newcclosure(function(data)
