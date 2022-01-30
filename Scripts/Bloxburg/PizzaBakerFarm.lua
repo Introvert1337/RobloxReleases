@@ -116,6 +116,8 @@ local function restock_ingredients(current_workstation)
         until current_workstation.Order.IngredientsLeft.Value > 0;
     end;
 end;
+    
+--// main autofarm loop
 
 while task.wait(0.1) do 
     if job_manager:GetJob() == "PizzaPlanetBaker" then
