@@ -31,11 +31,14 @@ old_namecall = hookmetamethod(game, "__namecall", function(self, ...)
         if namecall_method == "FireServer" or namecall_method == "InvokeServer" then 
             local arguments = {...};
             
-            local source = getinfo(5, "s").source;
+            local caller_info = getinfo(5, "sl") or getinfo(4, "sl");
+            
+            local source = caller_info.source;
+            local line = ":" .. caller_info.currentline;
             
             arguments.__name = remote_name;
             arguments.__method = namecall_method;
-            arguments.__source = source:sub(2, #source);
+            arguments.__source = source:sub(2, #source) .. line;
 
             rconsolewarn(table_print(arguments) .. "\n\n");
         end;
