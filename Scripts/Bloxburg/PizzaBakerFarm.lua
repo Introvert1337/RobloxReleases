@@ -83,7 +83,7 @@ local function get_dual_station(current_workstation)
                 local main_baker_display = station.OrderDisplay.DisplayMain;
                 local baker_gui = main_baker_display:FindFirstChild("BakerGUI");
 
-                if baker_gui and (baker_gui.Used.Visible == false or baker_gui.Used.TitleLabel.Text == "Too far") then
+                if baker_gui and (not baker_gui.Used.Visible or baker_gui.Used.TitleLabel.Text == "Too far") then
                     return station;
                 end;
             end;
