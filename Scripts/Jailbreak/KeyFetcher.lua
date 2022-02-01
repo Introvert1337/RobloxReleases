@@ -60,8 +60,8 @@ do -- redeemcode
 end;
 
 do -- kick
-    local door_removed_signal = getconnections(collection_service:GetInstanceRemovedSignal("Door"))[1].Function;
-    local kick_function = getupvalue(getupvalue(getupvalue(getupvalue(door_removed_signal, 2), 2).Run, 1), 1)[4].c;
+    local door_removed_function = getconnections(collection_service:GetInstanceRemovedSignal("Door"))[1].Function;
+    local kick_function = getupvalue(getupvalue(getupvalue(getupvalue(door_removed_function, 2), 2).Run, 1), 1)[4].c;
     
     network_keys.Kick = fetch_key(kick_function);
 end;
@@ -73,8 +73,8 @@ do -- spawncar
 end;
 
 do -- damage
-    local military_added_signal = require(game_folder.MilitaryTurret.MilitaryTurretBinder)._classAddedSignal._handlerListHead._fn;
-    local damage_function = getproto(military_added_signal, 1);
+    local military_added_function = require(game_folder.MilitaryTurret.MilitaryTurretBinder)._classAddedSignal._handlerListHead._fn;
+    local damage_function = getproto(military_added_function, 1);
     
     network_keys.Damage = fetch_key(damage_function);
 end;
@@ -104,15 +104,15 @@ do -- punch
 end;
 
 do -- falldamage
-    local jump_signal = default_actions.onJumpPressed._handlerListHead._next._fn;
-    local fall_function = getupvalue(getupvalue(getupvalue(jump_signal, 1), 4), 3);
+    local jump_function = default_actions.onJumpPressed._handlerListHead._next._fn;
+    local fall_function = getupvalue(getupvalue(getupvalue(jump_function, 1), 4), 3);
     
     network_keys.FallDamage = fetch_key(fall_function);
 end;
 
 do -- pickpocket / arrest
-    local character_added_signal = getconnections(collection_service:GetInstanceAddedSignal("Character"))[1].Function;
-    local interact_function = getupvalue(character_added_signal, 2);
+    local character_added_function = getconnections(collection_service:GetInstanceAddedSignal("Character"))[1].Function;
+    local interact_function = getupvalue(character_added_function, 2);
 
     local pickpocket_function = getupvalue(getupvalue(interact_function, 2), 2);
     local arrest_function = getupvalue(getupvalue(interact_function, 1), 7);
@@ -132,8 +132,8 @@ do -- broadcastinputbegan / broadcastinputended
 end;
 
 do -- eject / hijack / entercar
-    local seat_added_signal = getconnections(collection_service:GetInstanceAddedSignal("VehicleSeat"))[1].Function;
-    local seat_interact_function = getupvalue(seat_added_signal, 1);
+    local seat_added_function = getconnections(collection_service:GetInstanceAddedSignal("VehicleSeat"))[1].Function;
+    local seat_interact_function = getupvalue(seat_added_function, 1);
 
     local hijack_function = getupvalue(seat_interact_function, 1);
     local eject_function = getupvalue(seat_interact_function, 2);
