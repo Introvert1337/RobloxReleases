@@ -264,9 +264,9 @@ dependencies.modules.player_utils.isPointInTag = function(point, tag)
     return old_is_point_in_tag(point, tag);
 end;
 
---// return teleport function 
+--// main teleport function 
 
-return function(cframe, tried) -- unoptimized
+local function teleport(cframe, tried) -- unoptimized
     local tried = tried or {};
     local nearest_vehicle = teleportation:get_nearest_vehicle(tried);
 
@@ -293,7 +293,7 @@ return function(cframe, tried) -- unoptimized
                 if nearest_vehicle.Seat.PlayerName.Value ~= player.Name then -- if it failed to enter, try a new car
                     table.insert(tried, nearest_vehicle);
 
-                    return teleportation:car_teleport(cframe, tried or {nearest_vehicle});
+                    return teleport(cframe, tried or {nearest_vehicle});
                 end;
             end;
 
@@ -318,3 +318,5 @@ return function(cframe, tried) -- unoptimized
         end;
     end;
 end;
+
+return teleport;
