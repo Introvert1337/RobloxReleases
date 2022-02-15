@@ -267,12 +267,20 @@ end;
 --// main teleport function (not returning a new function directly because of recursion)
 
 local function teleport(cframe, tried) -- unoptimized
+    local relative_position = (cframe.Position - player.Character.HumanoidRootPart.Position);
+    local target_distance = relative_position.Magnitude;
+
+    if target_distance <= 20 and not workspace:Raycast(player.Character.HumanoidRootPart.Position, relative_position.Unit * target_distance, dependencies.variables.raycast_params) then 
+        player.Character.HumanoidRootPart.CFrame = cframe; 
+        
+        return;
+    end; 
+
     local tried = tried or {};
     local nearest_vehicle = utilities:get_nearest_vehicle(tried);
 
     if nearest_vehicle then 
         local vehicle_distance = (nearest_vehicle.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude; 
-        local target_distance = (cframe.Position - player.Character.HumanoidRootPart.Position).Magnitude;
 
         if target_distance < vehicle_distance then -- if target position is closer than the nearest vehicle
             movement:move_to_position(player.Character.HumanoidRootPart, cframe, dependencies.variables.player_speed);
