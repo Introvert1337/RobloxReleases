@@ -59,7 +59,7 @@ local dependencies = {
     door_positions = {}    
 };
 
-local teleportation = {};
+local movement = {};
 local utilities = {};
 
 --// function to toggle if a door can be collided with
@@ -72,9 +72,37 @@ function utilities:toggle_door_collision(door, toggle)
     end;
 end;
 
+--// function to get the nearest vehicle that can be entered
+
+function utilities:get_nearest_vehicle(tried) -- unoptimized
+    local nearest;
+    local distance = math.huge;
+
+    for index, action in next, dependencies.modules.ui.CircleAction.Specs do -- all of the interations
+        if action.IsVehicle and action.ShouldAllowEntry == true and action.Enabled == true and action.Name == "Enter Driver" then -- if the interaction is to enter the driver seat of a vehicle
+            local vehicle = action.ValidRoot;
+
+            if not table.find(tried, vehicle) and workspace.VehicleSpawns:FindFirstChild(vehicle.Name) then
+                if not dependencies.unsupported_vehicles[vehicle.Name] and (dependencies.modules.store._state.garageOwned.Vehicles[vehicle.Name] or dependencies.free_vehicles[vehicle.Name]) and not vehicle.Seat.Player.Value then -- check if the vehicle is supported, owned and not already occupied
+                    if not workspace:Raycast(vehicle.Seat.Position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then
+                        local magnitude = (vehicle.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude; 
+            
+                        if magnitude < distance then 
+                            distance = magnitude;
+                            nearest = vehicle;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+    end;
+
+    return nearest;
+end;
+
 --// function to pathfind to a position with no collision above
 
-function teleportation:pathfind(tried)
+function movement:pathfind(tried)
     local distance = math.huge;
     local nearest;
 
@@ -118,16 +146,16 @@ function teleportation:pathfind(tried)
 
     utilities:toggle_door_collision(nearest.instance, true);
 
-    teleportation:pathfind(tried);
+    movement:pathfind(tried);
 end;
 
 --// function to interpolate characters position to a position
 
-function teleportation:move_to_position(part, cframe, speed, car, target_vehicle, tried_vehicles)
+function movement:move_to_position(part, cframe, speed, car, target_vehicle, tried_vehicles)
     local vector_position = cframe.Position;
     
     if not car and workspace:Raycast(part.Position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then -- if there is an object above us, use pathfind function to get to a position with no collision above
-        teleportation:pathfind();
+        movement:pathfind();
         wait(0.5);
     end;
     
@@ -145,10 +173,10 @@ function teleportation:move_to_position(part, cframe, speed, car, target_vehicle
         if target_vehicle and target_vehicle.Seat.Player.Value then -- if someone occupies the vehicle while we're moving to it, we need to move to the next vehicle
             table.insert(tried_vehicles, target_vehicle);
 
-            local nearest_vehicle = teleportation:get_nearest_vehicle(tried_vehicles);
+            local nearest_vehicle = utilities:get_nearest_vehicle(tried_vehicles);
 
             if nearest_vehicle then 
-                teleportation:move_to_position(player.Character.HumanoidRootPart, nearest_vehicle.Seat.CFrame, 135, false, nearest_vehicle);
+                movement:move_to_position(player.Character.HumanoidRootPart, nearest_vehicle.Seat.CFrame, 135, false, nearest_vehicle);
             end;
 
             return;
@@ -157,34 +185,6 @@ function teleportation:move_to_position(part, cframe, speed, car, target_vehicle
 
     part.CFrame = CFrame.new(part.Position.X, vector_position.Y, part.Position.Z);
     part.Velocity = Vector3.new(0, 0, 0);
-end;
-
---// function to get the nearest vehicle that can be entered
-
-function teleportation:get_nearest_vehicle(tried) -- unoptimized
-    local nearest;
-    local distance = math.huge;
-
-    for index, action in next, dependencies.modules.ui.CircleAction.Specs do -- all of the interations
-        if action.IsVehicle and action.ShouldAllowEntry == true and action.Enabled == true and action.Name == "Enter Driver" then -- if the interaction is to enter the driver seat of a vehicle
-            local vehicle = action.ValidRoot;
-
-            if not table.find(tried, vehicle) and workspace.VehicleSpawns:FindFirstChild(vehicle.Name) then
-                if not dependencies.unsupported_vehicles[vehicle.Name] and (dependencies.modules.store._state.garageOwned.Vehicles[vehicle.Name] or dependencies.free_vehicles[vehicle.Name]) and not vehicle.Seat.Player.Value then -- check if the vehicle is supported, owned and not already occupied
-                    if not workspace:Raycast(vehicle.Seat.Position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then
-                        local magnitude = (vehicle.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude; 
-            
-                        if magnitude < distance then 
-                            distance = magnitude;
-                            nearest = vehicle;
-                        end;
-                    end;
-                end;
-            end;
-        end;
-    end;
-
-    return nearest;
 end;
 
 --// raycast filter
@@ -264,21 +264,21 @@ dependencies.modules.player_utils.isPointInTag = function(point, tag)
     return old_is_point_in_tag(point, tag);
 end;
 
---// main teleport function 
+--// main teleport function (not returning a new function directly because of recursion)
 
 local function teleport(cframe, tried) -- unoptimized
     local tried = tried or {};
-    local nearest_vehicle = teleportation:get_nearest_vehicle(tried);
+    local nearest_vehicle = utilities:get_nearest_vehicle(tried);
 
     if nearest_vehicle then 
         local vehicle_distance = (nearest_vehicle.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude; 
         local target_distance = (cframe.Position - player.Character.HumanoidRootPart.Position).Magnitude;
 
         if target_distance < vehicle_distance then -- if target position is closer than the nearest vehicle
-            teleportation:move_to_position(player.Character.HumanoidRootPart, cframe, dependencies.variables.player_speed);
+            movement:move_to_position(player.Character.HumanoidRootPart, cframe, dependencies.variables.player_speed);
         else 
             if nearest_vehicle.Seat.PlayerName.Value ~= player.Name then
-                teleportation:move_to_position(player.Character.HumanoidRootPart, nearest_vehicle.Seat.CFrame, dependencies.variables.player_speed, false, nearest_vehicle, tried);
+                movement:move_to_position(player.Character.HumanoidRootPart, nearest_vehicle.Seat.CFrame, dependencies.variables.player_speed, false, nearest_vehicle, tried);
 
                 local enter_attempts = 1;
 
@@ -309,7 +309,7 @@ local function teleport(cframe, tried) -- unoptimized
                 vehicle_root_part = nearest_vehicle.PrimaryPart;
             end;
 
-            teleportation:move_to_position(vehicle_root_part, cframe, dependencies.variables.vehicle_speed, true);
+            movement:move_to_position(vehicle_root_part, cframe, dependencies.variables.vehicle_speed, true);
 
             repeat -- attempt to exit car
                 wait(0.15);
