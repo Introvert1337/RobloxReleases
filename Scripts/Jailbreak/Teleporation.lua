@@ -42,7 +42,9 @@ local dependencies = {
     variables = {
         up_vector = Vector3.new(0, 500, 0),
         raycast_params = RaycastParams.new(),
-        path = pathfinding_service:CreatePath({WaypointSpacing = 3})
+        path = pathfinding_service:CreatePath({WaypointSpacing = 3}),
+        player_speed = 150, 
+        vehicle_speed = 450
     },
     modules = {
         ui = require(replicated_storage.Module.UI),
@@ -273,10 +275,10 @@ return function(cframe, tried) -- unoptimized
         local target_distance = (cframe.Position - player.Character.HumanoidRootPart.Position).Magnitude;
 
         if target_distance < vehicle_distance then -- if target position is closer than the nearest vehicle
-            teleportation:move_to_position(player.Character.HumanoidRootPart, cframe, 150);
+            teleportation:move_to_position(player.Character.HumanoidRootPart, cframe, dependencies.variables.player_speed);
         else 
             if nearest_vehicle.Seat.PlayerName.Value ~= player.Name then
-                teleportation:move_to_position(player.Character.HumanoidRootPart, nearest_vehicle.Seat.CFrame, 150, false, nearest_vehicle, tried);
+                teleportation:move_to_position(player.Character.HumanoidRootPart, nearest_vehicle.Seat.CFrame, dependencies.variables.player_speed, false, nearest_vehicle, tried);
 
                 local enter_attempts = 1;
 
@@ -307,7 +309,7 @@ return function(cframe, tried) -- unoptimized
                 vehicle_root_part = nearest_vehicle.PrimaryPart;
             end;
 
-            teleportation:move_to_position(vehicle_root_part, cframe, 450, true);
+            teleportation:move_to_position(vehicle_root_part, cframe, dependencies.variables.vehicle_speed, true);
 
             repeat -- attempt to exit car
                 wait(0.15);
