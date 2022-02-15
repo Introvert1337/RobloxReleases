@@ -56,7 +56,7 @@ local dependencies = {
     motorcycles = {Volt = true}, -- volt type is "custom" but works the same as a motorcycle
     free_vehicles = {},
     unsupported_vehicles = {},
-    door_positions = {}    
+    doors = {}    
 };
 
 local movement = {};
@@ -64,11 +64,13 @@ local utilities = {};
 
 --// function to toggle if a door can be collided with
 
-function utilities:toggle_door_collision(door, toggle)
-    for index, child in next, door.Model:GetChildren() do 
-        if child:IsA("BasePart") then 
-            child.CanCollide = toggle;
-        end; 
+function utilities:toggle_door_collision(toggle)
+    for index, door in next, dependencies.doors do 
+        for index, child in next, door.Model:GetChildren() do 
+            if child:IsA("BasePart") then 
+                child.CanCollide = toggle;
+            end; 
+        end;
     end;
 end;
 
@@ -103,48 +105,35 @@ end;
 --// function to pathfind to a position with no collision above
 
 function movement:pathfind(tried)
-    local distance = math.huge;
-    local nearest;
-
     local tried = tried or {};
-    
-    for index, value in next, dependencies.door_positions do -- find the nearest position in our list of positions without collision above
-        if not table.find(tried, value) then
-            local magnitude = (value.position - player.Character.HumanoidRootPart.Position).Magnitude;
-            
-            if magnitude < distance then 
-                distance = magnitude;
-                nearest = value;
+    local nearest_vehicle = utilities:get_nearest_vehicle(tried);
+
+    if nearest_vehicle then
+        utilities:toggle_door_collision(false);
+
+        local path = dependencies.variables.path;
+        path:ComputeAsync(player.Character.HumanoidRootPart.Position, nearest_vehicle.PrimaryPart.Position);
+
+        if path.Status == Enum.PathStatus.Success then -- if path making is successful
+            local waypoints = path:GetWaypoints();
+
+            for index = 1, #waypoints do 
+                local waypoint = waypoints[index];
+                
+                player.Character.HumanoidRootPart.CFrame = CFrame.new(waypoint.Position + Vector3.new(0, 2.5, 0)); -- walking movement is less optimal
+
+                if not workspace:Raycast(player.Character.HumanoidRootPart.Position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then -- if there is nothing above the player
+                    utilities:toggle_door_collision(true);
+
+                    return;
+                end;
+
+                wait(0.05);
             end;
         end;
+
+        table.insert(tried, nearest_vehicle);
     end;
-
-    table.insert(tried, nearest);
-
-    utilities:toggle_door_collision(nearest.instance, false);
-
-    local path = dependencies.variables.path;
-    path:ComputeAsync(player.Character.HumanoidRootPart.Position, nearest.position);
-
-    if path.Status == Enum.PathStatus.Success then -- if path making is successful
-        local waypoints = path:GetWaypoints();
-
-        for index = 1, #waypoints do 
-            local waypoint = waypoints[index];
-            
-            player.Character.HumanoidRootPart.CFrame = CFrame.new(waypoint.Position + Vector3.new(0, 2.5, 0)); -- walking movement is less optimal
-
-            if not workspace:Raycast(player.Character.HumanoidRootPart.Position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then -- if there is nothing above the player
-                utilities:toggle_door_collision(nearest.instance, true);
-
-                return;
-            end;
-
-            wait(0.05);
-        end;
-    end;
-
-    utilities:toggle_door_collision(nearest.instance, true);
 
     movement:pathfind(tried);
 end;
@@ -155,7 +144,7 @@ function movement:move_to_position(part, cframe, speed, car, target_vehicle, tri
     local vector_position = cframe.Position;
     
     if not car and workspace:Raycast(part.Position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then -- if there is an object above us, use pathfind function to get to a position with no collision above
-        movement:pathfind();
+        movement:pathfind({});
         wait(0.5);
     end;
     
@@ -220,27 +209,11 @@ for index, vehicle_data in next, dependencies.modules.vehicle_data do
     end;
 end;
 
---// get all positions near a door which have no collision above them
+--// get all doors
 
 for index, value in next, workspace:GetChildren() do
-    if value.Name:sub(-4, -1) == "Door" then 
-        local touch_part = value:FindFirstChild("Touch");
-
-        if touch_part and touch_part:IsA("BasePart") then
-            for distance = 5, 100, 5 do 
-                local forward_position, backward_position = touch_part.Position + touch_part.CFrame.LookVector * (distance + 3), touch_part.Position + touch_part.CFrame.LookVector * -(distance + 3); -- distance + 3 studs forward and backward from the door
-                
-                if not workspace:Raycast(forward_position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then -- if there is nothing above the forward position from the door
-                    table.insert(dependencies.door_positions, {instance = value, position = forward_position});
-
-                    break;
-                elseif not workspace:Raycast(backward_position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then -- if there is nothing above the backward position from the door
-                    table.insert(dependencies.door_positions, {instance = value, position = backward_position});
-
-                    break;
-                end;
-            end;
-        end;
+    if value.Name:sub(-4, -1) == "Door" and value:FindFirstChild("Model") then 
+        table.insert(dependencies.doors, value);
     end;
 end;
 
@@ -272,7 +245,7 @@ local function teleport(cframe, tried) -- unoptimized
 
     if target_distance <= 20 and not workspace:Raycast(player.Character.HumanoidRootPart.Position, relative_position.Unit * target_distance, dependencies.variables.raycast_params) then 
         player.Character.HumanoidRootPart.CFrame = cframe; 
-        
+
         return;
     end; 
 
