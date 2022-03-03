@@ -74,7 +74,7 @@ local function serialize_table(t, p, c, s)
     for i, v in next, t do
         local typ_i, typ_v = type(i) == 'table', type(v) == 'table'
         c[i], c[v] = (not c[i] and typ_i) and {i, p} or c[i], (not c[v] and typ_v) and {v, p} or c[v]
-        str = str .. s('  ', p) .. '[' .. localized_format(i, typ_i) .. '] = '  .. localized_format(v, typ_v) .. (ti < n and ',' or '') .. '\n'
+        str = str .. s('    ', p) .. '[' .. localized_format(i, typ_i) .. '] = '  .. localized_format(v, typ_v) .. (ti < n and ',' or '') .. '\n'
         ti = ti + 1
     end
 
