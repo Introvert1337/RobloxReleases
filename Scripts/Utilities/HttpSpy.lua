@@ -154,7 +154,7 @@ do
                 local success, response = pcall(old_http_functions[call_method], self, unpack(arguments));
 
                 if success then
-                    output_message(string_format("\n\ngame:%s(%s)\n\nResponse: %s"), call_method, table_format(arguments), response));
+                    output_message(string_format("\n\ngame:%s(%s)\n\nResponse: %s", call_method, table_format(arguments), response));
                     
                     assert(coroutine_resume(thread, response));
                 else 
