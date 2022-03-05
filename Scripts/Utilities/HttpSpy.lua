@@ -129,7 +129,7 @@ do
                 end;
             end);
             
-            local response = coroutine.yield();
+            local response = coroutine_yield();
             
             if response then 
                 return response 
@@ -162,7 +162,7 @@ do
                 end;
             end);
             
-            local response = coroutine.yield();
+            local response = coroutine_yield();
             
             if response then 
                 return response 
