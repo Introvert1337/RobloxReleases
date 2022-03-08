@@ -6,7 +6,6 @@ local remote_constant_index = table.find(getconstants(roll_function), "Unblock")
 return function(remote_name)
     local old_upvalues = getupvalues(roll_function);
 
-    
     setupvalue(roll_function, 1, {
         FindEffect = function(self, effect_name)
             return effect_name == "Blocking";
@@ -19,18 +18,14 @@ return function(remote_name)
         setupvalue(roll_function, 1, old_upvalues[1]);
         setupvalue(roll_function, 3, old_upvalues[3]);
         
-        if remote_name ~= "Unblock" then
-            setconstant(roll_function, remote_constant_index, "Unblock");
-        end;
+        setconstant(roll_function, remote_constant_index, "Unblock");
         
         coroutine.resume(thread, remote);
         
         coroutine.yield();
     end));
     
-    if remote_name ~= "Unblock" then
-        setconstant(roll_function, remote_constant_index, remote_name);
-    end;
+    setconstant(roll_function, remote_constant_index, remote_name);
     
     virtual_input_manager:SendKeyEvent(true, "Q", false, game);
     virtual_input_manager:SendKeyEvent(false, "Q", false, game);
