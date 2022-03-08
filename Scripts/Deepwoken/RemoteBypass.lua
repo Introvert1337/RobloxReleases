@@ -1,9 +1,11 @@
-local roll_function = getsenv(game:GetService("Players").LocalPlayer.Character.CharacterHandler.InputClient).Roll;
 local virtual_input_manager = game:GetService("VirtualInputManager");
+
+local roll_function = getsenv(game:GetService("Players").LocalPlayer.Character.CharacterHandler.InputClient).Roll;
+local remote_constant_index = table.find(getconstants(roll_function), "Unblock");
 
 return function(remote_name)
     local old_upvalues = getupvalues(roll_function);
-    local remote_constant_index = table.find(getconstants(roll_function), "Unblock");
+
     
     setupvalue(roll_function, 1, {
         FindEffect = function(self, effect_name)
