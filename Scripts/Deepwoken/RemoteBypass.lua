@@ -23,7 +23,7 @@ return function get_remote(remote_name)
         
         coroutine.resume(thread, remote);
         
-        return coroutine.yield();
+        coroutine.yield();
     end));
     
     if remote_name ~= "Unblock" then
