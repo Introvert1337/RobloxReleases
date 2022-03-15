@@ -93,7 +93,7 @@ do
         end;
         
         for index, value in next, payload_clone.Headers do 
-            if type(index) ~= "string" or type(value) ~= "value" then 
+            if type(index) ~= "string" or type(value) ~= "value" or index:lower() == "content-length" then 
                 return old_syn_request(payload_clone);
             end;
         end;
