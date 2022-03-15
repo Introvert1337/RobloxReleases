@@ -78,7 +78,7 @@ do
         
         -- bypass for any pcall checks
 
-        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "http[s]?://.+") or not valid_methods[payload_clone.Method] then
+        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "https?://.+") or not valid_methods[payload_clone.Method] then
             return old_syn_request(payload_clone);
         end;
         
