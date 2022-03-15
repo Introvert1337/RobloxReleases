@@ -15,6 +15,7 @@ local setmetatable = clonefunction(setmetatable);
 local unpack = clonefunction(unpack);
 local assert = clonefunction(assert);
 local pcall = clonefunction(pcall);
+local next = clonefunction(next);
 local appendfile = clonefunction(appendfile);
 local rconsoleprint = clonefunction(rconsoleprint);
 local getnamecallmethod = clonefunction(getnamecallmethod);
@@ -74,9 +75,27 @@ do
         for _, key in next, payload_keys do
             payload_clone[key] = payload_proxy[key];
         end;
+        
+        -- bypass for any pcall checks
 
         if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "http[s]?://.+") or not valid_methods[payload_clone.Method] then
             return old_syn_request(payload_clone);
+        end;
+        
+        if type(payload_clone.Headers) ~= "table" or type(payload_clone.Cookies) ~= "table" then 
+            return old_syn_request(payload_clone);
+        end; 
+        
+        for index, value in next, payload_clone.Cookies do 
+            if type(index) ~= "string" or type(value) ~= "value" then 
+                return old_syn_request(payload_clone);
+            end;
+        end;
+        
+        for index, value in next, payload_clone.Headers do 
+            if type(index) ~= "string" or type(value) ~= "value" then 
+                return old_syn_request(payload_clone);
+            end;
         end;
 
         -- the thread stuff is because without it you cant get the response because of yielding stuff
