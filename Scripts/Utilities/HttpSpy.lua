@@ -22,6 +22,7 @@ local getnamecallmethod = clonefunction(getnamecallmethod);
 
 local string_format = clonefunction(string.format);
 local string_match = clonefunction(string.match);
+local string_lower = clonefunction(string.lower);
 
 local coroutine_resume = clonefunction(coroutine.resume);
 local coroutine_yield = clonefunction(coroutine.yield);
@@ -93,7 +94,7 @@ do
         end;
         
         for index, value in next, payload_clone.Headers do 
-            if type(index) ~= "string" or type(value) ~= "value" or index:lower() == "content-length" then 
+            if type(index) ~= "string" or type(value) ~= "value" or string_lower(index) == "content-length" then 
                 return old_syn_request(payload_clone);
             end;
         end;
