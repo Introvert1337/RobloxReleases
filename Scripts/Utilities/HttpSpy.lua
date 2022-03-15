@@ -74,7 +74,7 @@ do
             payload_clone[key] = payload_proxy[key];
         end;
 
-        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "http[s]?://.+%..+") then
+        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "http[s]?://.+") then
             return old_syn_request(payload_clone);
         end;
 
