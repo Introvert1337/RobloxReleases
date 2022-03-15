@@ -73,7 +73,7 @@ do
             payload_clone[key] = payload_proxy[key];
         end;
 
-        if not payload_clone.Url then
+        if type(payload_clone.Url) ~= "string" then
             return old_syn_request(payload_clone);
         end;
 
