@@ -21,10 +21,7 @@ local rconsoleprint = clonefunction(rconsoleprint);
 local getnamecallmethod = clonefunction(getnamecallmethod);
 
 local string_format = clonefunction(string.format);
-
-local coroutine_resume = clonefunction(coroutine.resume);
-local coroutine_yield = clonefunction(coroutine.yield);
-local coroutine_running = clonefunction(coroutine.running);
+local instance_new = clonefunction(Instance.new);
 
 --// outputting stuff 
 
@@ -77,19 +74,19 @@ do
             return old_syn_request(payload_clone);
         end;
 
-        -- the thread stuff is because without it you cant get the response because of yielding stuff
+        -- the binable stuff is because without it you cant get the response because of yielding stuff
 
-        local thread = coroutine_running();
+        local bindable_event = instance_new("BindableEvent");
             
         spawn(function()
             local response = old_syn_request(payload_clone);
 
             output_message(string_format("\n\nsyn.request(%s)\n\nResponse Payload: %s", table_format(payload_clone), table_format(response)));
             
-            assert(coroutine_resume(thread, response)); -- return response to "thread" thread
+           bindable_event:Fire(response); -- return response
         end);
         
-        return coroutine_yield(); -- yield thread until resumed
+        return bindable_event.Event:Wait(); -- yield until fired
     end);
 end; 
 
@@ -115,7 +112,7 @@ do
             local old_http_function = old_http_functions[http_method];
             local arguments = {...};
             
-            local thread = coroutine_running();
+            local bindable_event = instance_new("BindableEvent");
                 
             spawn(function()
                 local success, response = pcall(old_http_function, self, unpack(arguments));
@@ -123,13 +120,13 @@ do
                 if success then
                     output_message(string_format("\n\ngame.%s(%s)\n\nResponse: %s", http_method, table_format(arguments), response));
                     
-                    assert(coroutine_resume(thread, response));
+                    bindable_event:Fire(response);
                 else 
-                    assert(coroutine_resume(thread));
+                    bindable_event:Fire();
                 end;
             end);
             
-            local response = coroutine_yield();
+            local response = bindable_event.Event:Wait();
             
             if response then 
                 return response 
@@ -148,7 +145,7 @@ do
         if http_methods[call_method] then
             local arguments = {...};
             
-            local thread = coroutine_running();
+            local bindable_event = instance_new("BindableEvent");
                 
             spawn(function()
                 local success, response = pcall(old_http_functions[call_method], self, unpack(arguments));
@@ -156,13 +153,13 @@ do
                 if success then
                     output_message(string_format("\n\ngame:%s(%s)\n\nResponse: %s", call_method, table_format(arguments), response));
                     
-                    assert(coroutine_resume(thread, response));
+                    bindable_event:Fire(response);
                 else 
-                    assert(coroutine_resume(thread));
+                    bindable_event:Fire();
                 end;
             end);
             
-            local response = coroutine_yield();
+            local response = bindable_event.Event:Wait();
             
             if response then 
                 return response 
