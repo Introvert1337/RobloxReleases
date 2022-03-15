@@ -12,7 +12,6 @@ local select = clonefunction(select);
 local rawget = clonefunction(rawget);
 local type = clonefunction(type);
 local setmetatable = clonefunction(setmetatable);
-local spawn = clonefunction(spawn);
 local unpack = clonefunction(unpack);
 local assert = clonefunction(assert);
 local pcall = clonefunction(pcall);
@@ -21,7 +20,11 @@ local rconsoleprint = clonefunction(rconsoleprint);
 local getnamecallmethod = clonefunction(getnamecallmethod);
 
 local string_format = clonefunction(string.format);
-local instance_new = clonefunction(Instance.new);
+
+local coroutine_resume = clonefunction(coroutine.resume);
+local coroutine_yield = clonefunction(coroutine.yield);
+local coroutine_running = clonefunction(coroutine.running);
+local coroutine_wrap = clonefunction(coroutine.wrap);
 
 --// outputting stuff 
 
@@ -74,19 +77,19 @@ do
             return old_syn_request(payload_clone);
         end;
 
-        -- the binable stuff is because without it you cant get the response because of yielding stuff
+        -- the thread stuff is because without it you cant get the response because of yielding stuff
 
-        local bindable_event = instance_new("BindableEvent");
+        local thread = coroutine_running();
             
-        spawn(function()
+        coroutine_wrap(function()
             local response = old_syn_request(payload_clone);
 
             output_message(string_format("\n\nsyn.request(%s)\n\nResponse Payload: %s", table_format(payload_clone), table_format(response)));
             
-           bindable_event:Fire(response); -- return response
-        end);
+            assert(coroutine_resume(thread, response)); -- return response to "thread" thread
+        end)();
         
-        return bindable_event.Event:Wait(); -- yield until fired
+        return coroutine_yield(); -- yield thread until resumed
     end);
 end; 
 
@@ -112,21 +115,21 @@ do
             local old_http_function = old_http_functions[http_method];
             local arguments = {...};
             
-            local bindable_event = instance_new("BindableEvent");
+            local thread = coroutine_running();
                 
-            spawn(function()
+            coroutine_wrap(function()
                 local success, response = pcall(old_http_function, self, unpack(arguments));
 
                 if success then
                     output_message(string_format("\n\ngame.%s(%s)\n\nResponse: %s", http_method, table_format(arguments), response));
                     
-                    bindable_event:Fire(response);
+                    assert(coroutine_resume(thread, response));
                 else 
-                    bindable_event:Fire();
+                    assert(coroutine_resume(thread));
                 end;
-            end);
+            end)();
             
-            local response = bindable_event.Event:Wait();
+            local response = coroutine_yield();
             
             if response then 
                 return response 
@@ -145,21 +148,21 @@ do
         if http_methods[call_method] then
             local arguments = {...};
             
-            local bindable_event = instance_new("BindableEvent");
+            local thread = coroutine_running();
                 
-            spawn(function()
+            coroutine_wrap(function()
                 local success, response = pcall(old_http_functions[call_method], self, unpack(arguments));
 
                 if success then
                     output_message(string_format("\n\ngame:%s(%s)\n\nResponse: %s", call_method, table_format(arguments), response));
                     
-                    bindable_event:Fire(response);
+                    assert(coroutine_resume(thread, response));
                 else 
-                    bindable_event:Fire();
+                    assert(coroutine_resume(thread));
                 end;
-            end);
+            end)();
             
-            local response = bindable_event.Event:Wait();
+            local response = coroutine_yield();
             
             if response then 
                 return response 
