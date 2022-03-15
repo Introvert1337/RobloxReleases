@@ -48,6 +48,7 @@ local table_format = loadstring(game:HttpGet("https://raw.githubusercontent.com/
 
 do
     local payload_keys = {"Url", "Method", "Headers", "Cookies", "Body"};
+    local valid_methods = {"GET", "POST", "PATCH", "DELETE", "HEAD", "PUT", "OPTIONS"};
 
     local old_syn_request;
     old_syn_request = replaceclosure(syn.request, function(...) -- credits to wally for a lot of this
@@ -74,7 +75,7 @@ do
             payload_clone[key] = payload_proxy[key];
         end;
 
-        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "http[s]?://.+") then
+        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "http[s]?://.+") or not valid_methods[payload_clone.Method] then
             return old_syn_request(payload_clone);
         end;
 
