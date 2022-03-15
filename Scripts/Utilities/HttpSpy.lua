@@ -20,6 +20,7 @@ local rconsoleprint = clonefunction(rconsoleprint);
 local getnamecallmethod = clonefunction(getnamecallmethod);
 
 local string_format = clonefunction(string.format);
+local string_match = clonefunction(string.match);
 
 local coroutine_resume = clonefunction(coroutine.resume);
 local coroutine_yield = clonefunction(coroutine.yield);
@@ -73,7 +74,7 @@ do
             payload_clone[key] = payload_proxy[key];
         end;
 
-        if type(payload_clone.Url) ~= "string" then
+        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "http[s]?://.+%..+") then
             return old_syn_request(payload_clone);
         end;
 
