@@ -97,7 +97,7 @@ do
             end;
             
             for index, value in next, payload_clone.Headers do 
-                if type(index) ~= "string" or type(value) ~= "value" or string_lower(index) == "content-length" then 
+                if type(index) ~= "string" or type(value) ~= "string" or string_lower(index) == "content-length" then 
                     return old_syn_request(payload);
                 end;
             end;
@@ -109,7 +109,7 @@ do
             end;
             
             for index, value in next, payload_clone.Cookies do 
-                if type(index) ~= "string" or type(value) ~= "value" then 
+                if type(index) ~= "string" or type(value) ~= "string" then 
                     return old_syn_request(payload);
                 end;
             end;
