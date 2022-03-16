@@ -78,27 +78,35 @@ do
         end;
         
         -- bypass for any pcall checks
-
-        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "https?://.+") or not valid_methods[payload_clone.Method] then
+        
+        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "https?://.+") or not table.find(valid_methods, payload_clone.Method) then
             return old_syn_request(payload_clone);
         end;
         
-        if type(payload_clone.Headers) ~= "table" or type(payload_clone.Cookies) ~= "table" then 
-            return old_syn_request(payload_clone);
-        end; 
-        
-        for index, value in next, payload_clone.Cookies do 
-            if type(index) ~= "string" or type(value) ~= "value" then 
+        if payload_clone.Headers then 
+            if type(payload_clone.Headers) ~= "table" then 
                 return old_syn_request(payload_clone);
+            end;
+            
+            for index, value in next, payload_clone.Headers do 
+                if type(index) ~= "string" or type(value) ~= "value" or string_lower(index) == "content-length" then 
+                    return old_syn_request(payload_clone);
+                end;
             end;
         end;
         
-        for index, value in next, payload_clone.Headers do 
-            if type(index) ~= "string" or type(value) ~= "value" or string_lower(index) == "content-length" then 
+        if payload_clone.Cookies then 
+            if type(payload_clone.Cookies) ~= "table" then 
                 return old_syn_request(payload_clone);
             end;
+            
+            for index, value in next, payload_clone.Cookies do 
+                if type(index) ~= "string" or type(value) ~= "value" then 
+                    return old_syn_request(payload_clone);
+                end;
+            end;
         end;
-
+        
         -- the thread stuff is because without it you cant get the response because of yielding stuff
 
         local thread = coroutine_running();
@@ -128,36 +136,16 @@ do
         HttpPostAsync = true
     };
 
-    local old_http_functions = {};
-
     -- hook index variations of functions table
 
-    for http_method in next, http_methods do 
-        old_http_functions[http_method] = replaceclosure(game[http_method], function(self, ...)
-            local old_http_function = old_http_functions[http_method];
+    for http_method in next, http_methods do
+        local old_http_function;
+        old_http_function = replaceclosure(game[http_method], function(self, ...)
             local arguments = {...};
             
-            local thread = coroutine_running();
-                
-            coroutine_wrap(function()
-                local success, response = pcall(old_http_function, self, unpack(arguments));
-
-                if success then
-                    output_message(string_format("\n\ngame.%s(%s)\n\nResponse: %s", http_method, table_format(arguments), response));
-                    
-                    assert(coroutine_resume(thread, response));
-                else 
-                    assert(coroutine_resume(thread));
-                end;
-            end)();
+            output_message(string_format("\n\ngame.%s(%s)\n\nResponse: %s", http_method, table_format(arguments)));
             
-            local response = coroutine_yield();
-            
-            if response then 
-                return response 
-            else 
-                return old_http_function(self, ...);
-            end;
+            return old_http_function(self, ...);
         end);
     end;
     
@@ -170,27 +158,7 @@ do
         if http_methods[call_method] then
             local arguments = {...};
             
-            local thread = coroutine_running();
-                
-            coroutine_wrap(function()
-                local success, response = pcall(old_http_functions[call_method], self, unpack(arguments));
-
-                if success then
-                    output_message(string_format("\n\ngame:%s(%s)\n\nResponse: %s", call_method, table_format(arguments), response));
-                    
-                    assert(coroutine_resume(thread, response));
-                else 
-                    assert(coroutine_resume(thread));
-                end;
-            end)();
-            
-            local response = coroutine_yield();
-            
-            if response then 
-                return response 
-            else 
-                return old_namecall(self, ...);
-            end;
+            output_message(string_format("\n\ngame:%s(%s)\n\nResponse: %s", call_method, table_format(arguments)));
         end;
 
         return old_namecall(self, ...);
