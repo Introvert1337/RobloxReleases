@@ -79,39 +79,38 @@ do
 
         -- bypass for setmetatable(payload) checks
 
-        local payload_proxy = setmetatable({}, {__index = payload});
         local payload_clone = {};
 
         for _, key in next, payload_keys do
-            payload_clone[key] = payload_proxy[key];
+            payload_clone[key] = rawget(payload, key);
         end;
         
         -- bypass for any pcall checks
         
-        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "https?://.+") or not valid_methods[payload_clone.Method] then
-            return old_syn_request(payload_clone);
+        if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "https?://.+") or (payload_clone.Method and not valid_methods[payload_clone.Method]) then
+            return old_syn_request(payload);
         end;
         
         if payload_clone.Headers then 
             if type(payload_clone.Headers) ~= "table" then 
-                return old_syn_request(payload_clone);
+                return old_syn_request(payload);
             end;
             
             for index, value in next, payload_clone.Headers do 
                 if type(index) ~= "string" or type(value) ~= "value" or string_lower(index) == "content-length" then 
-                    return old_syn_request(payload_clone);
+                    return old_syn_request(payload);
                 end;
             end;
         end;
         
         if payload_clone.Cookies then 
             if type(payload_clone.Cookies) ~= "table" then 
-                return old_syn_request(payload_clone);
+                return old_syn_request(payload);
             end;
             
             for index, value in next, payload_clone.Cookies do 
                 if type(index) ~= "string" or type(value) ~= "value" then 
-                    return old_syn_request(payload_clone);
+                    return old_syn_request(payload);
                 end;
             end;
         end;
@@ -121,7 +120,7 @@ do
         local thread = coroutine_running();
             
         coroutine_wrap(function()
-            local response = old_syn_request(payload_clone);
+            local response = old_syn_request(payload);
 
             output_message(string_format("\n\nsyn.request(%s)\n\nResponse Payload: %s", table_format(payload_clone), table_format(response)));
             
