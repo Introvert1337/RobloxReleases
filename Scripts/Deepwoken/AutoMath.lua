@@ -1,7 +1,7 @@
 --// functions
 
 local function get_math_answer(text)
-    local first_number, operation, second_number = text:match("What is(%L+)(%l+) %l*(.+)");
+    local first_number, operation, second_number = text:match(" (%L+)(%D+)(.+)");
 
     if not operation then 
         return false;
@@ -13,7 +13,7 @@ local function get_math_answer(text)
         return first_number - second_number;
     elseif operation == "times" then 
         return first_number * second_number;
-    elseif operation == "divided" then 
+    elseif operation == "divided by" then 
         return first_number / second_number;
     end;
 end;
