@@ -1,7 +1,7 @@
 --// functions
 
 local function get_math_answer(text)
-    local first_number, operation, second_number = text:match(" (%L+)(%D+)(.+)");
+    local first_number, operation, second_number = text:match(" (%L+)(%l+) %l*(.+)");
 
     if not operation then 
         return false;
