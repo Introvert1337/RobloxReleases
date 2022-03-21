@@ -90,6 +90,10 @@ do
         if type(payload_clone.Url) ~= "string" or not string_match(payload_clone.Url, "https?://.+") or (payload_clone.Method and not valid_methods[payload_clone.Method]) then
             return old_syn_request(payload);
         end;
+      
+      if payload_clone.Body and (payload_clone.Method == "GET" or payload_clone.Method == "HEAD") then 
+          return old_syn_request(payload);
+      end;
         
         if payload_clone.Headers then 
             if type(payload_clone.Headers) ~= "table" then 
