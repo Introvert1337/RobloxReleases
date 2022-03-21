@@ -2,7 +2,7 @@
 
 local virtual_input_manager = game:GetService("VirtualInputManager");
 
-local roll_function = getsenv(game:GetService("Players").LocalPlayer.Character.CharacterHandler.InputClient).Roll;
+local roll_function = getsenv(game:GetService("Players").LocalPlayer.Character:WaitFprChild("CharacterHandler").InputClient).Roll;
 local remote_constant_index = table.find(getconstants(roll_function), "Unblock");
 
 --// function to get remote 
