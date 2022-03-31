@@ -1,6 +1,6 @@
 --[[
   - works on syn.request, httpget, httpgetasync, httppost, getobjects, httppostasync
-  - bypasses every detection method i know of
+  - bypasses every detection method i know of (other than 1, but that one is like kinda impossible to fully fix well)
 
   - this script is by far the most undetected http spy
   - it doesnt support websockets yet, coming soon
@@ -31,7 +31,7 @@ local coroutine_wrap = clonefunction(coroutine.wrap);
 
 --// outputting stuff 
 
-local file_name = syn.crypt.base64.encode(syn.crypt.random(4)):gsub("%p", "") .. "_http_log.txt";
+local file_name = syn.crypt.base64.encode(syn.crypt.random(5)):gsub("%p", "") .. "_http_log.txt";
 
 if not isfile(file_name) then 
     writefile(file_name, os.date("%d/%m/%y, %I:%S %p") .. " Http Logs\n\n");
