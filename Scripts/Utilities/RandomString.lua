@@ -86,13 +86,10 @@ local function generate_replacement(character, settings, check)
 end;
 
 local function generate_random_string(settings) -- i could validate the ranges and blacklists in here to optimize but ehhhh
-    if not settings.length then 
-        error("length must be provided");
-    end; 
+    assert(settings.length, "length must be provided"); -- assert is really ugly but whatever
+    assert(type(settings.length) == "number", "length must be a number");
     
-    if not settings.uppercase and not settings.lowercase and not settings.numbers and not settings.symbols then 
-        error("one setting must be allowed");
-    end; 
+    assert(settings.uppercase or settings.lowercase or settings.numbers or settings.symbols, "one setting must be allowed");
     
     local random_string = syn.crypt.base64.encode(syn.crypt.random(settings.length));
 
