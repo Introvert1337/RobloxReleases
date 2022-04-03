@@ -12,7 +12,7 @@ end);
 
 --// main hook
 
-local old_namecall 
+local old_namecall;
 old_namecall = hookmetamethod(game, "__namecall", function(self, ...)
     local namecall_method = getnamecallmethod();
 

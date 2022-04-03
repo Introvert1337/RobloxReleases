@@ -4,7 +4,7 @@ local acid_check_remote = game:GetService("ReplicatedStorage").Requests.AcidChec
 
 --// main hook
 
-local old_namecall 
+local old_namecall;
 old_namecall = hookmetamethod(game, "__namecall", function(self, ...)
     if self == acid_check_remote then
         local namecall_method = getnamecallmethod();
