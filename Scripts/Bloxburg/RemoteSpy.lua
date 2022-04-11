@@ -5,7 +5,8 @@ local table_print = loadstring(game:HttpGet("https://raw.githubusercontent.com/I
 --// variables 
 
 local remote_blacklist = {
-    LookDir = true
+    LookDir = true,
+    GetServerTime = true
 };
 
 --// grab remotes 
