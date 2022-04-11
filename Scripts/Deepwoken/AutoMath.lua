@@ -1,11 +1,7 @@
 --// functions
 
 local function get_math_answer(text)
-    local first_number, operation, second_number = text:match("What is(%L+)(%l+) %l*(.+)");
-
-    if not operation then 
-        return false;
-    end;
+    local first_number, operation, second_number = text:gsub("[^%w%.-]", ""):match("(%A+)(%l+)(.+)");
 
     if operation == "plus" then 
         return first_number + second_number;
