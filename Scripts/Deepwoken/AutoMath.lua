@@ -1,7 +1,7 @@
 --// functions
 
 local function get_math_answer(text)
-    local first_number, operation, second_number = text:gsub("[^%w%.-]", ""):match("(%A+)(%l+)(.+)");
+    local first_number, operation, second_number = text:gsub("[^%w%.-]", ""):match("(%A+)(%a+)(.+)");
 
     if operation == "plus" then 
         return first_number + second_number;
@@ -9,7 +9,7 @@ local function get_math_answer(text)
         return first_number - second_number;
     elseif operation == "times" then 
         return first_number * second_number;
-    elseif operation == "divided" then 
+    elseif operation == "dividedby" then 
         return first_number / second_number;
     end;
 end;
