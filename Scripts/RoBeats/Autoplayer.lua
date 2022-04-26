@@ -1,145 +1,89 @@
---// variables
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local camera = workspace.CurrentCamera
 
-local player = game:GetService("Players").LocalPlayer;
+local Autoplayer = {
+    noteY = 3879,
+    sliderY = 3878,
+    laneDistanceThreshold = 25,
+    distanceLowerBound = 0.1,
+    distanceUpperBound = 1.2,
+    delayLowerBound = 0.03,
+    delayUpperBound = 0.05,
+    random = Random.new(),
+    pressedLanes = {},
+    heldLanes = {false, false, false, false},
+    keys = shared.keys or {"Z", "X", "Comma", "Period"},
+    lanePositions = {
+        -- singleplayer
+        [Vector3.new(-309.01, 387.70, -181.10)] = 1,
+        [Vector3.new(-306.87, 387.70, -178.56)] = 2,
+        [Vector3.new(-304.53, 387.70, -176.22)] = 3,
+        [Vector3.new(-302.00, 387.70, -174.01)] = 4,
+        -- multiplayer
+        [Vector3.new(-254.46, 387.70, -235.65)] = 1,
+        [Vector3.new(-251.92, 387.70, -233.51)] = 2,
+        [Vector3.new(-249.58, 387.70, -231.17)] = 3,
+        [Vector3.new(-247.44, 387.70, -228.63)] = 4,
+    }
+}
 
-local accuracy_bounds = {
-    Perfect = -20, 
-    Great = -50,
-    Okay = -100
-};
+local function GetNearestLane(position)
+    local nearestDistance = Autoplayer.laneDistanceThreshold
+    local nearestLane = {}
 
-local accuracy_names = {"Perfect", "Great", "Okay"};
+    for lanePosition, laneIndex in next, Autoplayer.lanePositions do
+        local distance = (lanePosition - position).Magnitude
 
-local accuracy = shared.accuracy or "Perfect"; -- Perfect, Great, Okay, Random
-local note_time_target = accuracy_bounds[accuracy];
+        if distance < nearestDistance then
+            nearestDistance = distance
+            nearestLane = {laneIndex, lanePosition}
+        end
+    end
 
-local track_system;
+    return nearestLane[1], nearestLane[2]
+end
 
---// functions 
+for index, instance in next, workspace:GetDescendants() do
+    local isNoteOrSliderEnd, isSliderStart = instance.ClassName == "CylinderHandleAdornment", instance.ClassName == "SphereHandleAdornment"
 
-local function get_track_action_functions(track_system)
-    local press_track, release_track; 
-    
-    for index, track_function in next, track_system do 
-        if type(track_function) == "function" then 
-            local constants = getconstants(track_function);
-            
-            if table.find(constants, "press") then 
-                press_track = track_function;
+    if isNoteOrSliderEnd or isSliderStart then
+        instance:GetPropertyChangedSignal("CFrame"):Connect(function()
+            if isNoteOrSliderEnd and instance.Transparency == 0 and math.floor(instance.CFrame.Y * 10) == Autoplayer.noteY then
+                local noteLane, notePosition = GetNearestLane(instance.CFrame.Position)
                 
-                if release_track then 
-                    break; 
-                end;
-            elseif table.find(constants, "release") then 
-                release_track = track_function;
-                
-                if press_track then 
-                    break; 
-                end;
-            end;
-        end;
-    end;
-    
-    return press_track, release_track;
-end;
+                if noteLane then
+                    local randomDistance = Autoplayer.random:NextNumber(Autoplayer.distanceLowerBound, Autoplayer.distanceUpperBound)
+                    local distance = instance.CFrame.Position.X - notePosition.X
 
-local function get_local_track_system(session)
-    local local_slot_index = getupvalue(session.set_local_game_slot, 1);
-    
-    for index, session_function in next, session do 
-        if type(session_function) == "function" then 
-            local object = getupvalues(session_function)[1];
-            
-            if type(object) == "table" and rawget(object, "count") and object:count() <= 4 then 
-                return object:get(local_slot_index);
-            end;
-        end;
-    end;
-end;
+                    if not Autoplayer.pressedLanes[noteLane] and distance <= randomDistance then
+                        Autoplayer.pressedLanes[noteLane] = true
 
---// get tracksystem 
+                        VirtualInputManager:SendKeyEvent(true, Autoplayer.keys[noteLane], false, game)
+                        task.wait(Autoplayer.random:NextNumber(Autoplayer.delayLowerBound, Autoplayer.delayUpperBound))
+                        VirtualInputManager:SendKeyEvent(false, Autoplayer.keys[noteLane], false, game)
 
-for index, module in next, getloadedmodules() do 
-    local module_value = require(module);
-    
-    if type(module_value) == "table" then 
-        local new_function = rawget(module_value, "new");
-        
-        if new_function then 
-            local first_upvalue = getupvalues(new_function)[1];
-            
-            if type(first_upvalue) == "table" and rawget(first_upvalue, "twister") then 
-                track_system = module_value;
-                
-                break;
-            end;
-        end;
-    end;
-end;
+                        Autoplayer.pressedLanes[noteLane] = false
+                    end
+                end
+            elseif (isNoteOrSliderEnd and instance.Transparency < 1 and instance.Height > 0.2 and math.floor(instance.CFrame.Y * 10) == Autoplayer.sliderY) or (isSliderStart and instance.Transparency == 0 and instance.Visible) then
+                local noteLane, notePosition = GetNearestLane(instance.CFrame.Position)
 
---// main autoplayer 
+                if noteLane then
+                    local randomDistance = Autoplayer.random:NextNumber(Autoplayer.distanceLowerBound, Autoplayer.distanceUpperBound)
+                    local distance = (isNoteOrSliderEnd and instance.CFrame.X + instance.Height / 3 or instance.CFrame.X) - notePosition.X
 
-local old_track_system_new = track_system.new;
-track_system.new = function(...)
-    local track_functions = old_track_system_new(...);
-    local arguments = {...};
-    
-    if arguments[2]._players._slots:get(arguments[3])._name == player.Name then -- make sure its only autoplaying your notes if in multiplayer
-        for index, track_function in next, track_functions do 
-            local upvalues = getupvalues(track_function);
-            
-            if type(upvalues[1]) == "table" and rawget(upvalues[1], "profilebegin") then 
-                local notes_table = upvalues[2];
-                
-                track_functions[index] = function(self, slot, session)
-                    local local_track_system = get_local_track_system(session);
-                    local press_track, release_track = get_track_action_functions(local_track_system);
-                    
-                    local test_press_name = getconstant(press_track, 10);
-                    local test_release_name = getconstant(release_track, 6);
-                    
-                    if accuracy == "Random" then 
-                        note_time_target = accuracy_bounds[accuracy_names[math.random(1, 3)]];
-                    end;
-    
-                    for note_index = 1, notes_table:count() do 
-                        local note = notes_table:get(note_index);
-                        
-                        if note then 
-                            local test_press, test_release = note[test_press_name], note[test_release_name];
-                            
-                            local note_track_index = note:get_track_index(note_index);
-                            local pressed, press_result, press_delay = test_press(note);
-                            
-                            if pressed and press_delay >= note_time_target then
-                                press_track(local_track_system, session, note_track_index);
-                                
-                                session:debug_any_press();
-                                
-                                if rawget(note, "get_time_to_end") then -- if its not a long note then release right after
-                                    delay(math.random(5, 18) / 100, function()
-                                        release_track(local_track_system, session, note_track_index);
-                                    end);
-                                end;
-                            end;
-                            
-                            if test_release then 
-                                local released, release_result, release_delay = test_release(note);
-                                
-                                if released and release_delay >= note_time_target then 
-                                    delay(math.random(2, 5) / 100, function()
-                                        release_track(local_track_system, session, note_track_index);
-                                    end);
-                                end;
-                            end;
-                        end;
-                    end;
-                    
-                    return track_function(self, slot, session);
-                end;
-            end;
-        end;
-    end;
-    
-    return track_functions;
-end;
+                    if Autoplayer.heldLanes[noteLane] == isNoteOrSliderEnd and distance <= randomDistance then
+                        VirtualInputManager:SendKeyEvent(isSliderStart, Autoplayer.keys[noteLane], false, game)
+
+                        if isNoteOrSliderEnd then
+                            Autoplayer.heldLanes[noteLane] = nil
+                            task.wait(0.04)
+                        end
+
+                        Autoplayer.heldLanes[noteLane] = isSliderStart
+                    end
+                end
+            end
+        end)
+    end
+end
