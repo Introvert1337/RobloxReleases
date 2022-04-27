@@ -1,5 +1,6 @@
 -- THIS IS A PROTOTYPE FOR THE OFFICIAL VERSION AND IS BUGGY
 -- ID RECOMMEND USING THE OFFICIAL VERSION HERE: https://github.com/ViperTools/RoBeats-External-Autoplayer
+-- SHOW NOTE TAILS MUST BE DISABLED
 
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local camera = workspace.CurrentCamera
