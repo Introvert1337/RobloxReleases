@@ -1,3 +1,6 @@
+-- THIS IS A PROTOTYPE FOR THE OFFICIAL VERSION AND IS BUGGY
+-- ID RECOMMEND USING THE OFFICIAL VERSION HERE: https://github.com/ViperTools/RoBeats-External-Autoplayer
+
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local camera = workspace.CurrentCamera
 
@@ -6,12 +9,12 @@ local Autoplayer = {
     sliderY = 3878,
     laneDistanceThreshold = 25,
     distanceLowerBound = 0.1,
-    distanceUpperBound = 0.8,
+    distanceUpperBound = 0.9,
     delayLowerBound = 0.03,
-    delayUpperBound = 0.04,
+    delayUpperBound = 0.05,
     random = Random.new(),
     pressedLanes = {},
-    heldLanes = {false, false, false, false},
+    heldLanes = {},
     keys = shared.keys or {"Z", "X", "Comma", "Period"},
     lanePositions = {
         -- singleplayer
@@ -72,13 +75,8 @@ for index, instance in next, workspace:GetDescendants() do
                     local randomDistance = Autoplayer.random:NextNumber(Autoplayer.distanceLowerBound, Autoplayer.distanceUpperBound)
                     local distance = (isNoteOrSliderEnd and instance.CFrame.X + instance.Height / 3 or instance.CFrame.X) - notePosition.X
 
-                    if Autoplayer.heldLanes[noteLane] == isNoteOrSliderEnd and distance <= randomDistance then
+                    if not not Autoplayer.heldLanes[noteLane] == isNoteOrSliderEnd and distance <= randomDistance then
                         VirtualInputManager:SendKeyEvent(isSliderStart, Autoplayer.keys[noteLane], false, game)
-
-                        if isNoteOrSliderEnd then
-                            Autoplayer.heldLanes[noteLane] = nil
-                            task.wait(0.04)
-                        end
 
                         Autoplayer.heldLanes[noteLane] = isSliderStart
                     end
