@@ -1,6 +1,6 @@
--- THIS IS A PROTOTYPE FOR THE OFFICIAL VERSION AND IS BUGGY
--- ID RECOMMEND USING THE OFFICIAL VERSION HERE: https://github.com/ViperTools/RoBeats-External-Autoplayer
--- SHOW NOTE TAILS MUST BE DISABLED
+-- this is the lua version of the external autoplayer made by my friend and i (https://github.com/ViperTools/RoBeats-External-Autoplayer)
+
+local keys = shared.keys or {"Z", "X", "Comma", "Period"} -- MAKE THIS YOUR ROBEATS KEYBINDS FROM LEFT TO RIGHT, OR SET IN SHARED.KEYS
 
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local camera = workspace.CurrentCamera
@@ -13,29 +13,65 @@ local Autoplayer = {
     distanceUpperBound = 0.9,
     delayLowerBound = 0.03,
     delayUpperBound = 0.05,
+    sliderDebounce = 0.06,
     random = Random.new(),
     pressedLanes = {},
     heldLanes = {},
-    keys = shared.keys or {"Z", "X", "Comma", "Period"},
+    currentLanePositionsIndex = nil,
     lanePositions = {
-        -- singleplayer
-        [Vector3.new(-309.01, 387.70, -181.10)] = 1,
-        [Vector3.new(-306.87, 387.70, -178.56)] = 2,
-        [Vector3.new(-304.53, 387.70, -176.22)] = 3,
-        [Vector3.new(-302.00, 387.70, -174.01)] = 4,
-        -- multiplayer
-        [Vector3.new(-254.46, 387.70, -235.65)] = 1,
-        [Vector3.new(-251.92, 387.70, -233.51)] = 2,
-        [Vector3.new(-249.58, 387.70, -231.17)] = 3,
-        [Vector3.new(-247.44, 387.70, -228.63)] = 4,
+        {
+            Vector3.new(-309.00, 387.70, -181.09),
+            Vector3.new(-306.87, 387.70, -178.56),
+            Vector3.new(-304.53, 387.70, -176.21),
+            Vector3.new(-301.99, 387.70, -174.08)
+        },
+
+        {
+            Vector3.new(-301.99, 387.70, -235.64),
+            Vector3.new(-304.53, 387.70, -233.51),
+            Vector3.new(-306.87, 387.70, -231.16),
+            Vector3.new(-309.00, 387.70, -228.60)
+        },
+
+        {
+            Vector3.new(-247.44, 387.70, -228.63),
+            Vector3.new(-249.57, 387.70, -231.16),
+            Vector3.new(-251.92, 387.70, -233.51),
+            Vector3.new(-254.46, 387.70, -235.64)
+        },
+
+        {
+            Vector3.new(-254.46, 387.70, -174.08),
+            Vector3.new(-251.92, 387.70, -176.21),
+            Vector3.new(-249.57, 387.70, -178.56),
+            Vector3.new(-247.44, 387.70, -181.09)
+        }
     }
 }
 
-local function GetNearestLane(position)
+local function UpdateLanePositions() -- table.sort cant be used here
     local nearestDistance = Autoplayer.laneDistanceThreshold
-    local nearestLane = {}
+    local nearestGroupIndex
 
-    for lanePosition, laneIndex in next, Autoplayer.lanePositions do
+    for groupIndex, groupPositions in next, Autoplayer.lanePositions do
+        local distance = (groupPositions[1] - camera.CFrame.Position).Magnitude
+
+        if distance < nearestDistance then
+            nearestDistance = distance
+            nearestGroupIndex = groupIndex
+        end
+    end
+
+    Autoplayer.currentLanePositionsIndex = nearestGroupIndex
+end
+
+local function GetNearestLane(position) -- table.sort cant be used here
+    UpdateLanePositions()
+    
+    local nearestDistance = Autoplayer.laneDistanceThreshold
+    local nearestLane
+
+    for laneIndex, lanePosition in next, Autoplayer.lanePositions[Autoplayer.currentLanePositionsIndex] do
         local distance = (lanePosition - position).Magnitude
 
         if distance < nearestDistance then
@@ -44,42 +80,62 @@ local function GetNearestLane(position)
         end
     end
 
+    if not nearestLane then 
+        return
+    end
+
     return nearestLane[1], nearestLane[2]
 end
 
 for index, instance in next, workspace:GetDescendants() do
-    local isNoteOrSliderEnd, isSliderStart = instance.ClassName == "CylinderHandleAdornment", instance.ClassName == "SphereHandleAdornment"
-
-    if isNoteOrSliderEnd or isSliderStart then
+    if instance.ClassName == "CylinderHandleAdornment" then
         instance:GetPropertyChangedSignal("CFrame"):Connect(function()
-            if isNoteOrSliderEnd and instance.Transparency == 0 and math.floor(instance.CFrame.Y * 10) == Autoplayer.noteY then
-                local noteLane, notePosition = GetNearestLane(instance.CFrame.Position)
+            if instance.Transparency == 0 and math.floor(instance.CFrame.Y * 10) == Autoplayer.noteY then
+                local noteLane, lanePosition = GetNearestLane(instance.CFrame.Position)
                 
                 if noteLane then
                     local randomDistance = Autoplayer.random:NextNumber(Autoplayer.distanceLowerBound, Autoplayer.distanceUpperBound)
-                    local distance = instance.CFrame.Position.X - notePosition.X
+                    local distance = instance.CFrame.Position.X - lanePosition.X
+
+                    if Autoplayer.currentLanePositionsIndex > 2 then 
+                        distance = math.abs(distance)
+                    end
 
                     if not Autoplayer.pressedLanes[noteLane] and distance <= randomDistance then
                         Autoplayer.pressedLanes[noteLane] = true
 
-                        VirtualInputManager:SendKeyEvent(true, Autoplayer.keys[noteLane], false, game)
+                        VirtualInputManager:SendKeyEvent(true, keys[noteLane], false, game)
                         task.wait(Autoplayer.random:NextNumber(Autoplayer.delayLowerBound, Autoplayer.delayUpperBound))
-                        VirtualInputManager:SendKeyEvent(false, Autoplayer.keys[noteLane], false, game)
+                        VirtualInputManager:SendKeyEvent(false, keys[noteLane], false, game)
 
                         Autoplayer.pressedLanes[noteLane] = false
                     end
                 end
-            elseif (isNoteOrSliderEnd and instance.Transparency < 1 and instance.Height > 0.2 and math.floor(instance.CFrame.Y * 10) == Autoplayer.sliderY) or (isSliderStart and instance.Transparency == 0 and instance.Visible) then
-                local noteLane, notePosition = GetNearestLane(instance.CFrame.Position)
+            elseif instance.Transparency < 1 and instance.Height > 0.2 and math.floor(instance.CFrame.Y * 10) == Autoplayer.sliderY then
+                local noteLane, lanePosition = GetNearestLane(instance.CFrame.Position)
 
                 if noteLane then
                     local randomDistance = Autoplayer.random:NextNumber(Autoplayer.distanceLowerBound, Autoplayer.distanceUpperBound)
-                    local distance = (isNoteOrSliderEnd and instance.CFrame.X + instance.Height / 3 or instance.CFrame.X) - notePosition.X
+                    local distance = (instance.CFrame - instance.CFrame.LookVector * instance.Height / 2).X - lanePosition.X
 
-                    if not not Autoplayer.heldLanes[noteLane] == isNoteOrSliderEnd and distance <= randomDistance then
-                        VirtualInputManager:SendKeyEvent(isSliderStart, Autoplayer.keys[noteLane], false, game)
+                    if Autoplayer.currentLanePositionsIndex > 2 then 
+                        distance = math.abs(distance)
+                    end
 
-                        Autoplayer.heldLanes[noteLane] = isSliderStart
+                    if not Autoplayer.heldLanes[noteLane] and distance <= randomDistance then
+                        Autoplayer.heldLanes[noteLane] = true
+                        
+                        VirtualInputManager:SendKeyEvent(true, keys[noteLane], false, game)
+                        
+                        repeat
+                            task.wait() -- ugly but whatever
+                        until (Autoplayer.currentLanePositionsIndex > 2 and math.abs((instance.CFrame + instance.CFrame.LookVector * instance.Height / 2).X - lanePosition.X) or (instance.CFrame + instance.CFrame.LookVector * instance.Height / 2).X - lanePosition.X) <= randomDistance
+                        
+                        VirtualInputManager:SendKeyEvent(false, keys[noteLane], false, game)
+                        
+                        task.wait(Autoplayer.sliderDebounce)
+                        
+                        Autoplayer.heldLanes[noteLane] = false
                     end
                 end
             end
