@@ -5,9 +5,7 @@ local network_keys = {}
 local function scan_network_keys(table)
     for index, value in next, table do
         if islclosure(value) and not is_synapse_function(value) then
-            local constants = getconstants(value)
-            
-            for index, constant in next, constants do
+            for index, constant in next, getconstants(value) do
                 if type(constant) == "string" then
                     local cleansed_string, pattern_matched = constant:gsub("%W+", "")
                     
