@@ -1,7 +1,7 @@
 --// variables 
 
 local player = game:GetService("Players").LocalPlayer;
-local job_manager = require(player.PlayerGui.MainGUI.Scripts.JobService);
+local job_manager = require(player.PlayerGui.MainGUI.Scripts.JobHandler);
 
 --// grab remotes 
 
