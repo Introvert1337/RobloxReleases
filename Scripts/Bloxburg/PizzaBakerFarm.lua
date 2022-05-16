@@ -1,13 +1,13 @@
 --// variables 
 
 local player = game:GetService("Players").LocalPlayer;
-local job_manager = require(player.PlayerGui.MainGUI.Scripts.JobManager);
+local job_manager = require(player.PlayerGui.MainGUI.Scripts.JobService);
 
 --// grab remotes 
 
 local remotes = {};
 
-local remote_added = getconnections(game:GetService("ReplicatedStorage").Modules.DataManager.DescendantAdded)[1].Function;
+local remote_added = getconnections(game:GetService("ReplicatedStorage").Modules.DataService.DescendantAdded)[1].Function;
 local remote_keys = getupvalue(remote_added, 1);
 
 for remote_key, remote_name in next, getupvalue(getupvalue(remote_added, 2), 1) do
