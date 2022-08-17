@@ -19,7 +19,6 @@ local game_folder = replicated_storage.Game;
 local team_choose_ui = require(game_folder.TeamChooseUI); -- module used in multiple keys
 local default_actions = require(game_folder.DefaultActions); -- module used in multiple keys
 
-local roblox_environment = getrenv();
 local network_keys = {};
 
 --// Functions 
@@ -30,7 +29,7 @@ local function fetch_key(caller_function)
     for index, constant in next, constants do
         if keys_list[constant] then -- if the constants already contain the raw key
             return constant;
-        elseif type(constant) ~= "string" or constant == "" or roblox_environment[constant] or string[constant] or table[constant] or #constant > 7 or constant:lower() ~= constant then
+        elseif type(constant) ~= "string" or constant == "" or #constant > 7 or constant:lower() ~= constant then
             constants[index] = nil; -- remove constants that are 100% not the ones we need to make it a bit faster
         end;
     end;
@@ -97,21 +96,10 @@ do -- punch
     network_keys.Punch = fetch_key(punch_function);
 end;
 
-do -- falldamage
-    local jump_function = default_actions.onJumpPressed._handlerListHead._next._fn;
-    local fall_function = getupvalue(getupvalue(getupvalue(jump_function, 1), 4), 3);
-    
-    network_keys.FallDamage = fetch_key(fall_function);
-end;
-
-do -- pickpocket / arrest
+do -- arrest
     local character_added_function = getconnections(collection_service:GetInstanceAddedSignal("Character"))[1].Function;
-    local interact_function = getupvalue(character_added_function, 2);
+    local arrest_function = getupvalue(getupvalue(getupvalue(character_added_function, 2), 1), 7);
 
-    local pickpocket_function = getupvalue(getupvalue(interact_function, 2), 2);
-    local arrest_function = getupvalue(getupvalue(interact_function, 1), 7);
-
-    network_keys.Pickpocket = fetch_key(pickpocket_function);
     network_keys.Arrest = fetch_key(arrest_function);
 end;
 
