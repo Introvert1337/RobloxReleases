@@ -3,6 +3,8 @@
 
     - This script is in early development and can be buggy
     - Some of this code is old and unoptimized
+    - This is mainly meant for longer teleports, short teleports inside of buldings and what not would be better to be implemented yourself
+    - You have to wait for the current teleport to finish to use it again
 
     Anticheat Explanation: 
 
@@ -26,15 +28,15 @@
     - Exit the vehicle
 ]]
 
---// variables
-
-local keys, network = loadstring(game:HttpGet("https://raw.githubusercontent.com/Introvert1337/RobloxReleases/main/Scripts/Jailbreak/KeyFetcher.lua"))();
+--// services
 
 local replicated_storage = game:GetService("ReplicatedStorage");
 local run_service = game:GetService("RunService");
 local pathfinding_service = game:GetService("PathfindingService");
 local players = game:GetService("Players");
 local tween_service = game:GetService("TweenService");
+
+--// variables
 
 local player = players.LocalPlayer;
 
@@ -44,23 +46,26 @@ local dependencies = {
         raycast_params = RaycastParams.new(),
         path = pathfinding_service:CreatePath({WaypointSpacing = 3}),
         player_speed = 150, 
-        vehicle_speed = 450
+        vehicle_speed = 450,
+        teleporting = false,
+        stopVelocity = false
     },
     modules = {
         ui = require(replicated_storage.Module.UI),
         store = require(replicated_storage.App.store),
         player_utils = require(replicated_storage.Game.PlayerUtils),
-        vehicle_data = require(replicated_storage.Game.Garage.VehicleData)
+        vehicle_data = require(replicated_storage.Game.Garage.VehicleData),
+        character_util = require(replicated_storage.Game.CharacterUtil)
     },
-    helicopters = {Heli = true}, -- heli is included in free vehicles
-    motorcycles = {Volt = true}, -- volt type is "custom" but works the same as a motorcycle
-    free_vehicles = {},
-    unsupported_vehicles = {},
-    door_positions = {}    
+    helicopters = { Heli = true }, -- heli is included in free vehicles
+    motorcycles = { Volt = true }, -- volt type is "custom" but works the same as a motorcycle
+    free_vehicles = { Camaro = true },
+    unsupported_vehicles = { SWATVan = true },
+    door_positions = { }    
 };
 
-local movement = {};
-local utilities = {};
+local movement = { };
+local utilities = { };
 
 --// function to toggle if a door can be collided with
 
@@ -86,10 +91,10 @@ function utilities:get_nearest_vehicle(tried) -- unoptimized
                 if not dependencies.unsupported_vehicles[vehicle.Name] and (dependencies.modules.store._state.garageOwned.Vehicles[vehicle.Name] or dependencies.free_vehicles[vehicle.Name]) and not vehicle.Seat.Player.Value then -- check if the vehicle is supported, owned and not already occupied
                     if not workspace:Raycast(vehicle.Seat.Position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then
                         local magnitude = (vehicle.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude; 
-            
+
                         if magnitude < distance then 
                             distance = magnitude;
-                            nearest = vehicle;
+                            nearest = action;
                         end;
                     end;
                 end;
@@ -106,7 +111,7 @@ function movement:pathfind(tried)
     local distance = math.huge;
     local nearest;
 
-    local tried = tried or {};
+    local tried = tried or { };
     
     for index, value in next, dependencies.door_positions do -- find the nearest position in our list of positions without collision above
         if not table.find(tried, value) then
@@ -174,9 +179,10 @@ function movement:move_to_position(part, cframe, speed, car, target_vehicle, tri
             table.insert(tried_vehicles, target_vehicle);
 
             local nearest_vehicle = utilities:get_nearest_vehicle(tried_vehicles);
+            local vehicle_object = nearest_vehicle and nearest_vehicle.ValidRoot;
 
-            if nearest_vehicle then 
-                movement:move_to_position(player.Character.HumanoidRootPart, nearest_vehicle.Seat.CFrame, 135, false, nearest_vehicle);
+            if vehicle_object then 
+                movement:move_to_position(player.Character.HumanoidRootPart, vehicle_object.Seat.CFrame, 135, false, vehicle_object);
             end;
 
             return;
@@ -184,13 +190,13 @@ function movement:move_to_position(part, cframe, speed, car, target_vehicle, tri
     until (part.Position - higher_position).Magnitude < 10;
 
     part.CFrame = CFrame.new(part.Position.X, vector_position.Y, part.Position.Z);
-    part.Velocity = Vector3.new(0, 0, 0);
+    part.Velocity = Vector3.zero;
 end;
 
 --// raycast filter
 
 dependencies.variables.raycast_params.FilterType = Enum.RaycastFilterType.Blacklist;
-dependencies.variables.raycast_params.FilterDescendantsInstances = {player.Character, workspace.Vehicles, workspace:FindFirstChild("Rain")};
+dependencies.variables.raycast_params.FilterDescendantsInstances = { player.Character, workspace.Vehicles, workspace:FindFirstChild("Rain") };
 
 workspace.ChildAdded:Connect(function(child) -- if it starts raining, add rain to collision ignore list
     if child.Name == "Rain" then 
@@ -231,11 +237,11 @@ for index, value in next, workspace:GetChildren() do
                 local forward_position, backward_position = touch_part.Position + touch_part.CFrame.LookVector * (distance + 3), touch_part.Position + touch_part.CFrame.LookVector * -(distance + 3); -- distance + 3 studs forward and backward from the door
                 
                 if not workspace:Raycast(forward_position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then -- if there is nothing above the forward position from the door
-                    table.insert(dependencies.door_positions, {instance = value, position = forward_position});
+                    table.insert(dependencies.door_positions, { instance = value, position = forward_position });
 
                     break;
                 elseif not workspace:Raycast(backward_position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then -- if there is nothing above the backward position from the door
-                    table.insert(dependencies.door_positions, {instance = value, position = backward_position});
+                    table.insert(dependencies.door_positions, { instance = value, position = backward_position });
 
                     break;
                 end;
@@ -244,25 +250,26 @@ for index, value in next, workspace:GetChildren() do
     end;
 end;
 
---// no damage and ragdoll 
-
-local old_fire_server = getupvalue(network.FireServer, 1);
-setupvalue(network.FireServer, 1, function(key, ...)
-    if key == keys.Damage then 
-        return;
-    end;
-
-    return old_fire_server(key, ...);
-end);
+--// no fall damage or ragdoll 
 
 local old_is_point_in_tag = dependencies.modules.player_utils.isPointInTag;
 dependencies.modules.player_utils.isPointInTag = function(point, tag)
-    if tag == "NoRagdoll" or tag == "NoFallDamage" then 
+    if dependencies.variables.teleporting and tag == "NoRagdoll" or tag == "NoFallDamage" then
         return true;
     end;
     
     return old_is_point_in_tag(point, tag);
 end;
+
+--// stop velocity
+
+task.spawn(function()
+    while task.wait() do
+        if dependencies.variables.stopVelocity and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.Velocity = Vector3.zero;
+        end;
+    end;
+end);
 
 --// main teleport function (not returning a new function directly because of recursion)
 
@@ -276,55 +283,67 @@ local function teleport(cframe, tried) -- unoptimized
         return;
     end; 
 
-    local tried = tried or {};
+    local tried = tried or { };
     local nearest_vehicle = utilities:get_nearest_vehicle(tried);
+    local vehicle_object = nearest_vehicle and nearest_vehicle.ValidRoot;
 
-    if nearest_vehicle then 
-        local vehicle_distance = (nearest_vehicle.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude; 
+    dependencies.variables.teleporting = true;
+
+    if vehicle_object then 
+        local vehicle_distance = (vehicle_object.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude;
 
         if target_distance < vehicle_distance then -- if target position is closer than the nearest vehicle
             movement:move_to_position(player.Character.HumanoidRootPart, cframe, dependencies.variables.player_speed);
         else 
-            if nearest_vehicle.Seat.PlayerName.Value ~= player.Name then
-                movement:move_to_position(player.Character.HumanoidRootPart, nearest_vehicle.Seat.CFrame, dependencies.variables.player_speed, false, nearest_vehicle, tried);
+            if vehicle_object.Seat.PlayerName.Value ~= player.Name then
+                movement:move_to_position(player.Character.HumanoidRootPart, vehicle_object.Seat.CFrame, dependencies.variables.player_speed, false, vehicle_object, tried);
+
+                dependencies.variables.stopVelocity = true;
 
                 local enter_attempts = 1;
 
                 repeat -- attempt to enter car
-                    network:FireServer(keys.EnterCar, nearest_vehicle, nearest_vehicle.Seat);
+                    nearest_vehicle:Callback(true)
                     
                     enter_attempts = enter_attempts + 1;
 
                     task.wait(0.1);
-                until enter_attempts == 10 or nearest_vehicle.Seat.PlayerName.Value == player.Name;
+                until enter_attempts == 10 or vehicle_object.Seat.PlayerName.Value == player.Name;
 
-                if nearest_vehicle.Seat.PlayerName.Value ~= player.Name then -- if it failed to enter, try a new car
-                    table.insert(tried, nearest_vehicle);
+                dependencies.variables.stopVelocity = false;
 
-                    return teleport(cframe, tried or {nearest_vehicle});
+                if vehicle_object.Seat.PlayerName.Value ~= player.Name then -- if it failed to enter, try a new car
+                    table.insert(tried, vehicle_object);
+
+                    return teleport(cframe, tried or { vehicle_object });
                 end;
             end;
 
             local vehicle_root_part; -- inline conditional would be way too long
 
-            if dependencies.helicopters[nearest_vehicle.Name] then -- each type of vehicle has a different root part, which is why we sort them so we can do this
-                vehicle_root_part = nearest_vehicle.Model.TopDisc;
-            elseif dependencies.motorcycles[nearest_vehicle.Name] then 
-                vehicle_root_part = nearest_vehicle.CameraVehicleSeat;
-            elseif nearest_vehicle.Name == "DuneBuggy" then 
-                vehicle_root_part = nearest_vehicle.BoundingBox;
+            if dependencies.helicopters[vehicle_object.Name] then -- each type of vehicle has a different root part, which is why we sort them so we can do this
+                vehicle_root_part = vehicle_object.Model.TopDisc;
+            elseif dependencies.motorcycles[vehicle_object.Name] then 
+                vehicle_root_part = vehicle_object.CameraVehicleSeat;
+            elseif vehicle_object.Name == "DuneBuggy" then 
+                vehicle_root_part = vehicle_object.BoundingBox;
             else 
-                vehicle_root_part = nearest_vehicle.PrimaryPart;
+                vehicle_root_part = vehicle_object.PrimaryPart;
             end;
 
             movement:move_to_position(vehicle_root_part, cframe, dependencies.variables.vehicle_speed, true);
 
             repeat -- attempt to exit car
                 task.wait(0.15);
-                network:FireServer(keys.ExitCar);
-            until nearest_vehicle.Seat.PlayerName.Value ~= player.Name;
+                dependencies.modules.character_util.OnJump();
+            until vehicle_object.Seat.PlayerName.Value ~= player.Name;
         end;
+    else
+        movement:move_to_position(player.Character.HumanoidRootPart, cframe, dependencies.variables.player_speed);
     end;
+
+    task.wait(0.5);
+    dependencies.variables.teleporting = false;
 end;
 
 return teleport;
