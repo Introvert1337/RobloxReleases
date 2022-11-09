@@ -55,7 +55,8 @@ local dependencies = {
         store = require(replicated_storage.App.store),
         player_utils = require(replicated_storage.Game.PlayerUtils),
         vehicle_data = require(replicated_storage.Game.Garage.VehicleData),
-        character_util = require(replicated_storage.Game.CharacterUtil)
+        character_util = require(replicated_storage.Game.CharacterUtil),
+        paraglide = require(replicated_storage.Game.Paraglide)
     },
     helicopters = { Heli = true }, -- heli is included in free vehicles
     motorcycles = { Volt = true }, -- volt type is "custom" but works the same as a motorcycle
@@ -260,6 +261,17 @@ dependencies.modules.player_utils.isPointInTag = function(point, tag)
     
     return old_is_point_in_tag(point, tag);
 end;
+
+--// anti skydive
+
+local oldIsFlying = dependencies.modules.paraglide.IsFlying
+dependencies.modules.paraglide.IsFlying = function(...)
+    if dependencies.variables.teleporting and getinfo(2, "s").source:find("Falling") then
+        return true
+    end
+    
+    return oldIsFlying(...)
+end
 
 --// stop velocity
 
