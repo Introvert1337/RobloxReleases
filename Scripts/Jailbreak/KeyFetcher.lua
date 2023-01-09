@@ -209,7 +209,7 @@ do -- exception keys
                 for keyName, keyCheck in next, exceptionKeys do
                     if keyCheck(clientFunction) then
                         networkKeys[keyName] = key
-                        
+
                         break
                     end
                 end
@@ -220,7 +220,7 @@ do -- exception keys
     if not success then
         local failedMessage = ("Failed to fetch key ( %s )"):format(errorMessage)
 
-        for _, keyName in next, exceptionKeys do
+        for keyName in next, exceptionKeys do
             networkKeys[keyName] = networkKeys[keyName] or failedMessage
         end
     end
