@@ -7,6 +7,7 @@ end;
 --// Variables 
 
 local start_time = tick();
+local debug_output = false;
 
 local replicated_storage = game:GetService("ReplicatedStorage");
 local collection_service = game:GetService("CollectionService");
@@ -23,8 +24,12 @@ local network_keys = {};
 
 --// Functions 
 
-local function fetch_key(caller_function)
+local function fetch_key(caller_function, key_index)
     local constants = getconstants(caller_function);
+    local prefix_indexes = { };
+    local found_keys = { };
+    
+    key_index = key_index or 1;
     
     for index, constant in next, constants do
         if keys_list[constant] then -- if the constants already contain the raw key
@@ -34,26 +39,41 @@ local function fetch_key(caller_function)
         end;
     end;
     
-    for key, remote in next, keys_list do 
+    for key, remote in next, keys_list do
         local prefix_passed = false;
+        local prefix_index;
         local key_length = #key;
-        
-        for index, constant in next, constants do 
+
+        for index, constant in next, constants do
             local constant_length = #constant;
-            
+
             if not prefix_passed and key:sub(1, constant_length) == constant then -- check if the key starts with one of the constants
-                prefix_passed = constant;
+                prefix_passed, prefix_index = constant, index;
             elseif prefix_passed and constant ~= prefix_passed and key:sub(key_length - (constant_length - 1), key_length) == constant then -- check if the key ends with one of the constants
-                return key;
+                table.insert(prefix_indexes, prefix_index);
+                table.insert(found_keys, { key, index });
+ 
+                break;
             end;
         end;
     end;
+    
+    -- cleanse invalid keys
+    for index, key_info in next, found_keys do
+        if table.find(prefix_indexes, key_info[2]) then
+            table.remove(found_keys, index);
+        end;
+    end;
+    
+    local correct_key = found_keys[key_index];
+
+    return correct_key and correct_key[1] or "Failed to fetch key";
 end;
 
 --// Key Fetching 
 
 do -- redeemcode
-    local redeem_code_function = getproto(require(game_folder.Codes).Init, 4);
+    local redeem_code_function = getproto(require(game_folder.Codes).Init, 8);
 
     network_keys.RedeemCode = fetch_key(redeem_code_function);
 end;
@@ -98,7 +118,7 @@ end;
 
 do -- arrest
     local character_added_function = getconnections(collection_service:GetInstanceAddedSignal("Character"))[1].Function;
-    local arrest_function = getupvalue(getupvalue(getupvalue(character_added_function, 2), 1), 7);
+    local arrest_function = getupvalue(getupvalue(character_added_function, 2), 1);
 
     network_keys.Arrest = fetch_key(arrest_function);
 end;
@@ -142,6 +162,14 @@ local environment = getgenv();
 
 environment.network_keys, environment.network = network_keys, network;
 
-warn(("Key Fetcher Loaded in %s Seconds"):format(tick() - start_time));
+if debug_output then
+    rconsolewarn(("Key Fetcher Loaded in %s Seconds\n"):format(tick() - start_time));
+    
+    for index, key in next, network_keys do
+        rconsoleprint(("%s : %s\n"):format(index, key));
+    end;
+else
+    warn(("Key Fetcher Loaded in %s Seconds"):format(tick() - start_time));
+end;
 
 return network_keys, network;
