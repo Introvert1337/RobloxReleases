@@ -25,7 +25,16 @@ local itemSystem = require(gameFolder.ItemSystem.ItemSystem) -- module used in m
 local networkKeys = {}
 local keyFunctions = {}
 
---// Functions 
+local exceptionKeys = { -- keys to use alternative method (deemed to be more efficient for these cases)
+    PlaySound = function(checkFunction)
+        return getconstants(checkFunction)[1] == "Source"
+    end,
+    CameraUpdate = function(checkFunction)
+        return getconstants(checkFunction)[1] == "MakeSpring"
+    end
+}
+
+--// Functions
 
 local function fetchKey(callerFunction, keyIndex)
     local constants = getconstants(callerFunction)
@@ -193,33 +202,27 @@ do -- falldamage
     end
 end
 
-do -- cameraupdate
-    keyFunctions.CameraUpdate = function()
-        for _, connection in next, getconnections(RunService.Heartbeat) do
-            local connectionCallback = connection.Function
-            
-            if typeof(connectionCallback) == "function" and islclosure(connectionCallback) then
-                if getconstants(connectionCallback)[4] == "Vehicle Heartbeat" then
-                    return connectionCallback
-                end
-            end
-        end
-    end
-end
-
-do -- playsound (exception, uses different method)
+do -- exception keys
     local success, errorMessage = pcall(function()
         for key, clientFunction in next, getupvalue(teamChooseUI.Init, 2) do 
-            if typeof(clientFunction) == "function" and getconstants(clientFunction)[1] == "Source" then 
-                networkKeys.PlaySound = key
-                
-                break
+            if typeof(clientFunction) == "function" then 
+                for keyName, keyCheck in next, exceptionKeys do
+                    if keyCheck(clientFunction) then
+                        networkKeys[keyName] = key
+                        
+                        break
+                    end
+                end
             end
         end
     end)
 
     if not success then
-        networkKeys.PlaySound = ("Failed to fetch key ( %s )"):format(errorMessage)
+        local failedMessage = ("Failed to fetch key ( %s )"):format(errorMessage)
+
+        for _, keyName in next, exceptionKeys do
+            networkKeys[keyName] = networkKeys[keyName] or failedMessage
+        end
     end
 end
 
