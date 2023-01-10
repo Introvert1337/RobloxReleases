@@ -7,7 +7,7 @@ end
 --// Variables 
 
 local startTime = tick()
-local debugOutput = true
+local debugOutput = debugOutput ~= nil and debugOutput or true
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
