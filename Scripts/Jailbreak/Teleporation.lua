@@ -229,7 +229,7 @@ end;
 
 --// get all positions near a door which have no collision above them
 
-for index, value in next, workspace:GetChildren() do
+for index, value in next, workspace:GetDescendants() do
     if value.Name:sub(-4, -1) == "Door" then 
         local touch_part = value:FindFirstChild("Touch");
 
@@ -331,19 +331,7 @@ local function teleport(cframe, tried) -- unoptimized
                 end;
             end;
 
-            local vehicle_root_part; -- inline conditional would be way too long
-
-            if dependencies.helicopters[vehicle_object.Name] then -- each type of vehicle has a different root part, which is why we sort them so we can do this
-                vehicle_root_part = vehicle_object.Model.TopDisc;
-            elseif dependencies.motorcycles[vehicle_object.Name] then 
-                vehicle_root_part = vehicle_object.CameraVehicleSeat;
-            elseif vehicle_object.Name == "DuneBuggy" then 
-                vehicle_root_part = vehicle_object.BoundingBox;
-            else 
-                vehicle_root_part = vehicle_object.PrimaryPart;
-            end;
-
-            movement:move_to_position(vehicle_root_part, cframe, dependencies.variables.vehicle_speed, true);
+            movement:move_to_position(vehicle_object.Engine, cframe, dependencies.variables.vehicle_speed, true);
 
             repeat -- attempt to exit car
                 task.wait(0.15);
