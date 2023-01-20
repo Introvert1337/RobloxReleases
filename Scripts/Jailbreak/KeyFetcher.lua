@@ -45,7 +45,7 @@ local function fetchKey(callerFunction, keyIndex)
     
     for index, constant in next, constants do
         if keysList[constant] then -- if the constants already contain the raw key
-            return constant
+            table.insert(foundKeys, { constant, 0 })
         elseif typeof(constant) ~= "string" or constant == "" or #constant > 7 or constant:lower() ~= constant then
             constants[index] = nil -- remove constants that are 100% not the ones we need to make it a bit faster
         end
@@ -63,7 +63,7 @@ local function fetchKey(callerFunction, keyIndex)
             elseif prefixPassed and constant ~= prefixPassed and key:sub(keyLength - (constantLength - 1), keyLength) == constant then -- check if the key ends with one of the constants
                 table.insert(prefixIndexes, prefixIndex)
                 table.insert(foundKeys, { key, index })
- 
+
                 break
             end
         end
@@ -75,7 +75,7 @@ local function fetchKey(callerFunction, keyIndex)
             table.remove(foundKeys, index)
         end
     end
-    
+
     local correctKey = foundKeys[keyIndex]
 
     return correctKey and correctKey[1] or "Failed to fetch key"
@@ -134,11 +134,11 @@ do -- arrest / pickpocket
     local characterInteractFunction = getupvalue(characterAddedFunction, 2)
 
     keyFunctions.Arrest = function()
-        return getupvalue(characterInteractFunction, 1)
+        return getupvalue(getupvalue(characterInteractFunction, 1), 7)
     end
 
     keyFunctions.Pickpocket = function()
-        return characterInteractFunction
+        return getupvalue(characterInteractFunction, 3)
     end
 end
 
