@@ -33,7 +33,7 @@ local function getRemote(remoteName)
     return coroutine.yield()
 end
 
-if not integrityHooked then
+if integrityHooked then
     return getRemote
 end
 
