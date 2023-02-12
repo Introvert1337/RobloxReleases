@@ -7,7 +7,6 @@ end
 --// Variables 
 
 local startTime = tick()
-local debugOutput = false
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
@@ -46,7 +45,7 @@ local function fetchKey(callerFunction, keyIndex)
     for index, constant in next, constants do
         if keysList[constant] then -- if the constants already contain the raw key
             table.insert(foundKeys, { constant, 0 })
-        elseif typeof(constant) ~= "string" or constant == "" or #constant > 7 or constant:lower() ~= constant then
+        elseif typeof(constant) ~= "string" or constant == "" or constant:lower() ~= constant then
             constants[index] = nil -- remove constants that are 100% not the ones we need to make it a bit faster
         end
     end
@@ -54,6 +53,7 @@ local function fetchKey(callerFunction, keyIndex)
     for key, remote in next, keysList do
         local prefixPassed, prefixIndex = false
         local keyLength = #key
+        local keyFound = false
 
         for index, constant in next, constants do
             local constantLength = #constant
@@ -61,10 +61,38 @@ local function fetchKey(callerFunction, keyIndex)
             if not prefixPassed and key:sub(1, constantLength) == constant then -- check if the key starts with one of the constants
                 prefixPassed, prefixIndex = constant, index
             elseif prefixPassed and constant ~= prefixPassed and key:sub(keyLength - (constantLength - 1), keyLength) == constant then -- check if the key ends with one of the constants
+                keyFound = true
+                
                 table.insert(prefixIndexes, prefixIndex)
                 table.insert(foundKeys, { key, index })
 
                 break
+            end
+        end
+        
+        -- awful edge case when the prefix is the same as the suffix (eg. jf0esd9j, prefix and suffix is j)
+        -- it isnt a perfect fix but afaik there isnt a good method to do it
+        if not keyFound and prefixPassed and key:sub(keyLength - (#prefixPassed - 1), keyLength) == prefixPassed then
+            local constantCharacters = {}
+            local charactersValid = true
+            
+            for _, constant in next, constants do
+                for character in constant:gmatch("(%w)") do
+                    table.insert(constantCharacters, character)
+                end
+            end
+            
+            for character in key:gmatch("(%w)") do -- make sure every character in the key shows up
+                if not table.find(constantCharacters, character) then
+                    charactersValid = false
+                    
+                    break
+                end
+            end
+            
+            if charactersValid then
+                table.insert(prefixIndexes, prefixIndex)
+                table.insert(foundKeys, { key, index })
             end
         end
     end
@@ -105,9 +133,15 @@ do -- damage
     end
 end
 
-do -- switchteam
-    keyFunctions.SwitchTeam = function()
+do -- switchteam (needs to be called before jointeam)
+    keyFunctions.JoinTeam = function()
         return getproto(teamChooseUI.Show, 4)
+    end
+end
+
+do -- jointeam
+    keyFunctions.SwitchTeam = function()
+        return getproto(getproto(require(gameFolder.SidebarUI).Init, 2), 1)
     end
 end
 
@@ -140,6 +174,10 @@ do -- arrest / pickpocket
     keyFunctions.Pickpocket = function()
         return getupvalue(characterInteractFunction, 3)
     end
+    
+    keyFunctions.Breakout = function()
+        return getupvalue(characterInteractFunction, 4)
+    end
 end
 
 do -- broadcastinputbegan / broadcastinputended
@@ -157,7 +195,7 @@ do -- eject / hijack / entercar
     local seatInteractFunction = getupvalue(seatAddedFunction, 1)
     
     keyFunctions.Hijack = function()
-        return getupvalue(seatInteractFunction, 1)
+        return seatInteractFunction
     end
 
     keyFunctions.Eject = function()
@@ -166,6 +204,19 @@ do -- eject / hijack / entercar
 
     keyFunctions.EnterCar = function()
         return getupvalue(seatInteractFunction, 3)
+    end
+end
+
+do -- robstart / robend
+    local storeAddedFunction = getconnections(CollectionService:GetInstanceAddedSignal("SmallStore"))[1].Function
+    local robFunction = getupvalue(storeAddedFunction, 1)
+
+    keyFunctions.RobStart = function()
+        return robFunction
+    end
+    
+    keyFunctions.RobEnd = function()
+        return robFunction, 2
     end
 end
 
@@ -244,7 +295,7 @@ local environment = getgenv()
 
 environment.networkKeys, environment.network = networkKeys, network
 
-if debugOutput then
+if debugOutput then -- set this in a getgenv before loadstringing if u want it ig
     rconsolewarn(("Key Fetcher Loaded in %s Seconds\n"):format(tick() - startTime))
     
     for index, key in next, networkKeys do
