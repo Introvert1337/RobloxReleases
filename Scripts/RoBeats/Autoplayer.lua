@@ -1,6 +1,7 @@
 -- this is the lua version of the external autoplayer made by my friend and i (https://github.com/ViperTools/RoBeats-External-Autoplayer)
 
-local keys = shared.keys or {"Z", "X", "Comma", "Period"} -- MAKE THIS YOUR ROBEATS KEYBINDS FROM LEFT TO RIGHT, OR SET IN SHARED.KEYS
+local keys = shared.keys or {} -- MAKE THIS YOUR ROBEATS KEYBINDS FROM LEFT TO RIGHT, OR SET IN SHARED.KEYS
+local autoGrabKeys = shared.autoGrabKeys ~= nil and shared.autoGrabKeys or true
 
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local camera = workspace.CurrentCamera
@@ -87,9 +88,31 @@ local function GetNearestLane(position) -- table.sort cant be used here
     return nearestLane[1], nearestLane[2]
 end
 
+local function GrabKeys()
+    if not autoGrabKeys or #keys == 4 then 
+        return
+    end
+    
+    for _, child in next, workspace:GetChildren() do
+    	if child:FindFirstChild("ControlPopup") then
+    	    for _, descendant in next, child:GetChildren() do
+    	        if descendant.Name == "ControlPopup" then
+            		local popupLane = GetNearestLane(descendant.Position)
+            
+            		if popupLane then
+            			keys[popupLane] = descendant.SurfaceGui.Frame.Letter.Text
+            		end
+            	end
+            end
+    	end
+    end
+end
+
 for index, instance in next, workspace:GetDescendants() do
     if instance.ClassName == "CylinderHandleAdornment" then
         instance:GetPropertyChangedSignal("CFrame"):Connect(function()
+            GrabKeys()
+
             if instance.Transparency == 0 and math.floor(instance.CFrame.Y * 10) == Autoplayer.noteY then
                 local noteLane, lanePosition = GetNearestLane(instance.CFrame.Position)
                 
@@ -112,6 +135,8 @@ for index, instance in next, workspace:GetDescendants() do
                     end
                 end
             elseif instance.Transparency < 1 and instance.Height > 0.2 and math.floor(instance.CFrame.Y * 10) == Autoplayer.sliderY then
+                GrabKeys()
+
                 local noteLane, lanePosition = GetNearestLane(instance.CFrame.Position)
 
                 if noteLane then
