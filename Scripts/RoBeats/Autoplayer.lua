@@ -152,9 +152,13 @@ for index, instance in next, workspace:GetDescendants() do
                         
                         VirtualInputManager:SendKeyEvent(true, keys[noteLane], false, game)
                         
+                        local noteDistance
+
                         repeat
-                            task.wait() -- ugly but whatever
-                        until (Autoplayer.currentLanePositionsIndex > 2 and math.abs((instance.CFrame + instance.CFrame.LookVector * instance.Height / 2).X - lanePosition.X) or (instance.CFrame + instance.CFrame.LookVector * instance.Height / 2).X - lanePosition.X) <= randomDistance
+                            noteDistance = (instance.CFrame + instance.CFrame.LookVector * instance.Height / 2).X - lanePosition.X
+
+                            task.wait()
+                        until (Autoplayer.currentLanePositionsIndex > 2 and math.abs(noteDistance) or noteDistance) <= randomDistance
                         
                         VirtualInputManager:SendKeyEvent(false, keys[noteLane], false, game)
                         
