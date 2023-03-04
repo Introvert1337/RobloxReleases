@@ -50,7 +50,7 @@ local Autoplayer = {
     }
 }
 
-local function UpdateLanePositions() -- table.sort cant be used here
+local function UpdateLanePositions()
     local nearestDistance = Autoplayer.laneDistanceThreshold
     local nearestGroupIndex
 
@@ -66,7 +66,7 @@ local function UpdateLanePositions() -- table.sort cant be used here
     Autoplayer.currentLanePositionsIndex = nearestGroupIndex
 end
 
-local function GetNearestLane(position) -- table.sort cant be used here
+local function GetNearestLane(position)
     UpdateLanePositions()
     
     local nearestDistance = Autoplayer.laneDistanceThreshold
@@ -77,7 +77,7 @@ local function GetNearestLane(position) -- table.sort cant be used here
 
         if distance < nearestDistance then
             nearestDistance = distance
-            nearestLane = {laneIndex, lanePosition}
+            nearestLane = { laneIndex, lanePosition}
         end
     end
 
