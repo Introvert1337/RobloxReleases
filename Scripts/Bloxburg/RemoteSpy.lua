@@ -1,50 +1,54 @@
 --// function to convert a table to a formatted string (credits to aztup)
 
-local table_print = loadstring(game:HttpGet("https://raw.githubusercontent.com/Introvert1337/RobloxReleases/main/Scripts/Utilities/TableFormatter.lua"))();
+local tableFormat = loadstring(game:HttpGet("https://raw.githubusercontent.com/Introvert1337/RobloxReleases/main/Scripts/Utilities/TableFormatter.lua"))()
 
 --// variables 
 
-local remote_blacklist = {
+local remoteBlacklist = {
     LookDir = true,
     GetServerTime = true,
-    FloorPos = true
-};
+    FloorPos = true,
+    VehicleUpdate = true
+}
 
---// grab remotes 
+--// grab remotes
 
-local remotes = {};
+local remotes = {}
 
-local remote_added = getconnections(game:GetService("ReplicatedStorage").Modules.DataService.DescendantAdded)[1].Function;
-local remote_keys = getupvalue(remote_added, 1);
+local remoteAdded = getconnections(game:GetService("ReplicatedStorage").Modules.DataService.DescendantAdded)[1].Function
+local remoteKeys = getupvalue(remoteAdded, 1)
 
-for remote_key, remote_name in next, getupvalue(getupvalue(remote_added, 2), 1) do
-    remotes[remote_keys[remote_key]] = remote_name:sub(1, 2) == "F_" and remote_name:sub(3) or remote_name;
-end;
+for remoteKey, remoteName in next, getupvalue(getupvalue(remoteAdded, 2), 1) do
+    remotes[remoteKeys[remoteKey]] = remoteName:sub(1, 2) == "F_" and remoteName:sub(3) or remoteName
+end
 
 --// remote call hook 
 
-local old_namecall;
-old_namecall = hookmetamethod(game, "__namecall", function(self, ...)
-    local remote_name = remotes[self];
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local remoteName = remotes[self]
     
-    if remote_name and not remote_blacklist[remote_name] then 
-        local namecall_method = getnamecallmethod();
+    if remoteName and not remoteBlacklist[remoteName] then 
+        local namecallMethod = getnamecallmethod()
 
-        if namecall_method == "FireServer" or namecall_method == "InvokeServer" then 
-            local arguments = {...};
+        if (namecallMethod == "FireServer" and self.ClassName == "RemoteEvent") or (namecallMethod == "InvokeServer" and self.ClassName == "RemoteFunction") then 
+            local arguments = {...}
             
-            local caller_info = getinfo(5, "sl") or getinfo(4, "sl");
+            local source = debug.traceback()
             
-            local source = caller_info.source;
-            local line = ":" .. caller_info.currentline;
-            
-            arguments.__name = remote_name;
-            arguments.__method = namecall_method;
-            arguments.__source = source:sub(2, #source) .. line;
+            if checkcaller() then -- this is probably shit but idk
+                source = source:match("\n(.+)")
+            else
+                source = source:match(("function %s\n(.+)"):format(namecallMethod))
+            end
 
-            rconsolewarn(table_print(arguments) .. "\n\n");
-        end;
-    end;
+            arguments.__name = remoteName
+            arguments.__method = namecallMethod
+            arguments.__source = source:sub(1, -2)
+
+            rconsolewarn(tableFormat(arguments) .. "\n\n")
+        end
+    end
     
-    return old_namecall(self, ...);
-end);
+    return oldNamecall(self, ...)
+end)
