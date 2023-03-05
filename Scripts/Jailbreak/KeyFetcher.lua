@@ -195,7 +195,7 @@ do -- eject / hijack / entercar
     local seatInteractFunction = getupvalue(seatAddedFunction, 1)
     
     keyFunctions.Hijack = function()
-        return seatInteractFunction
+        return getupvalue(seatInteractFunction, 1)
     end
 
     keyFunctions.Eject = function()
