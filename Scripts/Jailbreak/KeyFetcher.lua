@@ -141,7 +141,7 @@ end
 
 do -- jointeam
     keyFunctions.SwitchTeam = function()
-        return getproto(getproto(require(gameFolder.SidebarUI).Init, 2), 1)
+        return getproto(getproto(getproto(require(gameFolder.SidebarUI).Init, 2), 1), 1)
     end
 end
 
@@ -168,7 +168,7 @@ do -- arrest / pickpocket
     local characterInteractFunction = getupvalue(characterAddedFunction, 2)
 
     keyFunctions.Arrest = function()
-        return getupvalue(getupvalue(characterInteractFunction, 1), 7)
+        return getupvalue(characterInteractFunction, 1)
     end
 
     keyFunctions.Pickpocket = function()
@@ -176,7 +176,7 @@ do -- arrest / pickpocket
     end
     
     keyFunctions.Breakout = function()
-        return getupvalue(characterInteractFunction, 4)
+        return characterInteractFunction
     end
 end
 
@@ -199,7 +199,7 @@ do -- eject / hijack / entercar
     end
 
     keyFunctions.Eject = function()
-        return getupvalue(seatInteractFunction, 2)
+        return seatInteractFunction
     end
 
     keyFunctions.EnterCar = function()
