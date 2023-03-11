@@ -94,17 +94,17 @@ local function GrabKeys()
     end
     
     for _, child in next, workspace:GetChildren() do
-    	if child:FindFirstChild("ControlPopup") then
-    	    for _, descendant in next, child:GetChildren() do
-    	        if descendant.Name == "ControlPopup" then
-            		local popupLane = GetNearestLane(descendant.Position)
-            
-            		if popupLane then
-            			keys[popupLane] = descendant.SurfaceGui.Frame.Letter.Text
-            		end
-            	end
+        if child:FindFirstChild("ControlPopup") then
+            for _, descendant in next, child:GetChildren() do
+                if descendant.Name == "ControlPopup" then
+                    local popupLane = GetNearestLane(descendant.Position)
+                    
+                    if popupLane then
+                    	keys[popupLane] = descendant.SurfaceGui.Frame.Letter.Text
+                    end
+                end
             end
-    	end
+        end
     end
 end
 
