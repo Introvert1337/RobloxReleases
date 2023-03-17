@@ -168,7 +168,7 @@ do -- arrest / pickpocket
     local characterInteractFunction = getupvalue(characterAddedFunction, 2)
 
     keyFunctions.Arrest = function()
-        return getupvalue(characterInteractFunction, 1)
+        return getupvalue(getupvalue(characterInteractFunction, 1), 7)
     end
 
     keyFunctions.Pickpocket = function()
@@ -176,7 +176,7 @@ do -- arrest / pickpocket
     end
     
     keyFunctions.Breakout = function()
-        return characterInteractFunction
+        return getupvalue(characterInteractFunction, 4)
     end
 end
 
@@ -195,7 +195,7 @@ do -- eject / hijack / entercar
     local seatInteractFunction = getupvalue(seatAddedFunction, 1)
     
     keyFunctions.Hijack = function()
-        return getupvalue(seatInteractFunction, 1)
+        return seatInteractFunction
     end
 
     keyFunctions.Eject = function()
