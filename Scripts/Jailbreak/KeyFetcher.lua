@@ -7,6 +7,7 @@ end
 --// Variables 
 
 local startTime = tick()
+local debugOutput = debugOutput ~= nil and debugOutput or true
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
@@ -195,11 +196,11 @@ do -- eject / hijack / entercar
     local seatInteractFunction = getupvalue(seatAddedFunction, 1)
     
     keyFunctions.Hijack = function()
-        return seatInteractFunction
+        return getupvalue(seatInteractFunction, 1)
     end
 
     keyFunctions.Eject = function()
-        return seatInteractFunction
+        return getupvalue(seatInteractFunction, 2)
     end
 
     keyFunctions.EnterCar = function()
@@ -228,11 +229,11 @@ do -- equipgun / unequipgun / buygun
     end
 
     keyFunctions.EquipGun = function()
-        return displayGunList, 3
+        return displayGunList, 2
     end
 
     keyFunctions.UnequipGun = function()
-        return displayGunList, 2
+        return displayGunList, 3
     end
 end
 
