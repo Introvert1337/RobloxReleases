@@ -7,7 +7,6 @@ end
 --// Variables 
 
 local startTime = tick()
-local debugOutput = debugOutput ~= nil and debugOutput or true
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
@@ -296,7 +295,7 @@ local environment = getgenv()
 
 environment.networkKeys, environment.network = networkKeys, network
 
-if debugOutput then -- set this in a getgenv before loadstringing if u want it ig
+if debugOutput or debugOutput == nil then -- defaults to true unless explicitly set to false
     rconsolewarn(("Key Fetcher Loaded in %s Seconds\n"):format(tick() - startTime))
     
     for index, key in next, networkKeys do
