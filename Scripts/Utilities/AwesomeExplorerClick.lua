@@ -1,4 +1,3 @@
--- made by wally/light devs, modded by me to have click to select part (toggle with left alt)
 local EmbeddedModules = {
     ["Explorer"] = function()
     --[[
@@ -321,6 +320,8 @@ local EmbeddedModules = {
                 
                 if raycastResult then
                     local raycastNode = nodes[raycastResult.Instance]
+
+                    if not raycastNode then return end
 
                     selection:SetTable({ raycastNode })
                     Explorer.ViewNode(raycastNode)
