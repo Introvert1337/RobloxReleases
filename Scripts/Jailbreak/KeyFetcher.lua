@@ -101,6 +101,10 @@ local function fetchKey(callerFunction, keyIndex)
     return correctKey and correctKey[1] or "Failed to fetch key"
 end
 
+local function errorHandle(callback)
+    return select(2, pcall(callback))
+end
+
 --// Fetch functions for keys
 
 do -- redeemcode
@@ -155,12 +159,13 @@ do -- punch
     end
 end
 
-do -- arrest / pickpocket
-    local characterAddedFunction = getconnections(CollectionService:GetInstanceAddedSignal("Character"))[1].Function -- hopefully this doesnt error but im not putting this in every callback cuz thats unoptimized
-    local characterInteractFunction = getupvalue(characterAddedFunction, 2)
+do -- arrest / pickpocket / breakout
+    local characterInteractFunction = errorHandle(function()
+        return getupvalue(getupvalue(require(ReplicatedStorage.App.CharacterBinder)._classAddedSignal._handlerListHead._fn, 1), 2)
+    end)
 
     keyFunctions.Arrest = function()
-        return getupvalue(getupvalue(characterInteractFunction, 1), 7)
+        return getupvalue(characterInteractFunction, 1)
     end
 
     keyFunctions.Pickpocket = function()
@@ -168,7 +173,7 @@ do -- arrest / pickpocket
     end
     
     keyFunctions.Breakout = function()
-        return getupvalue(characterInteractFunction, 4)
+        return characterInteractFunction
     end
 end
 
@@ -183,8 +188,9 @@ do -- broadcastinputbegan / broadcastinputended
 end
 
 do -- eject / hijack / entercar
-    local seatAddedFunction = getconnections(CollectionService:GetInstanceAddedSignal("VehicleSeat"))[1].Function -- hopefully this doesnt error but im not putting this in every callback cuz thats unoptimized
-    local seatInteractFunction = getupvalue(seatAddedFunction, 1)
+    local seatInteractFunction = errorHandle(function()
+        return getupvalue(getconnections(CollectionService:GetInstanceAddedSignal("VehicleSeat"))[1].Function, 1)
+    end)
     
     keyFunctions.Hijack = function()
         return getupvalue(seatInteractFunction, 1)
@@ -200,8 +206,9 @@ do -- eject / hijack / entercar
 end
 
 do -- robstart / robend
-    local storeAddedFunction = getconnections(CollectionService:GetInstanceAddedSignal("SmallStore"))[1].Function
-    local robFunction = getupvalue(storeAddedFunction, 1)
+    local robFunction = errorHandle(function()
+        return getupvalue(getconnections(CollectionService:GetInstanceAddedSignal("SmallStore"))[1].Function, 1)
+    end)
 
     keyFunctions.RobStart = function()
         return robFunction
@@ -213,13 +220,15 @@ do -- robstart / robend
 end
 
 do -- equipgun / unequipgun / buygun
-    local displayGunList = getproto(require(gameFolder.GunShop.GunShopUI).displayList, 1)
+    local displayGunList = errorHandle(function()
+        return getproto(require(gameFolder.GunShop.GunShopUI).displayList, 1)
+    end)
 
-    keyFunctions.BuyGun = function()
+    keyFunctions.EquipGun = function()
         return displayGunList, 1
     end
 
-    keyFunctions.EquipGun = function()
+    keyFunctions.BuyGun = function()
         return displayGunList, 2
     end
 
