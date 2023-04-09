@@ -10,7 +10,6 @@ local startTime = tick()
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
-local RunService = game:GetService("RunService")
 
 local network = getupvalue(require(ReplicatedStorage.Module.AlexChassis).SetEvent, 1)
 local keysList = getupvalue(getupvalue(network.FireServer, 1), 3)
