@@ -101,7 +101,13 @@ local function fetchKey(callerFunction, keyIndex)
 end
 
 local function errorHandle(callback)
-    return select(2, pcall(callback))
+    local success, returnValue = pcall(callback)
+
+    if not success then
+        return warn("Jailbreak Key Fetcher Error: " .. returnValue)
+    end
+
+    return returnValue
 end
 
 --// Fetch functions for keys
