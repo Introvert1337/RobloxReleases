@@ -37,62 +37,54 @@ local exceptionKeys = { -- keys to use alternative method (deemed to be more eff
 
 local function fetchKey(callerFunction, keyIndex)
     local constants = getconstants(callerFunction)
-    local prefixIndexes = { }
-    local foundKeys = { }
+    
+    local prefixIndexes = {}
+    local foundKeys = {}
+    local constantCharacters = {}
     
     keyIndex = keyIndex or 1
     
     for index, constant in next, constants do
         if keysList[constant] then -- if the constants already contain the raw key
             table.insert(foundKeys, { constant, 0 })
+            
+            constants[index] = nil
         elseif typeof(constant) ~= "string" or constant == "" or constant:lower() ~= constant then
             constants[index] = nil -- remove constants that are 100% not the ones we need to make it a bit faster
+        else
+            for character in constant:gmatch("(%w)") do
+                table.insert(constantCharacters, character)
+            end
         end
     end
+
     
     for key, remote in next, keysList do
         local prefixPassed, prefixIndex = false
         local keyLength = #key
-        local keyFound = false
-
+        
         for index, constant in next, constants do
             local constantLength = #constant
 
             if not prefixPassed and key:sub(1, constantLength) == constant then -- check if the key starts with one of the constants
                 prefixPassed, prefixIndex = constant, index
-            elseif prefixPassed and constant ~= prefixPassed and key:sub(keyLength - (constantLength - 1), keyLength) == constant then -- check if the key ends with one of the constants
-                keyFound = true
+            elseif prefixPassed and key:sub(keyLength - (constantLength - 1), keyLength) == constant then -- check if the key ends with one of the constants
+                local charactersValid = true
+
+                for character in key:gmatch("(%w)") do -- make sure every character in the key shows up
+                    if not table.find(constantCharacters, character) then
+                        charactersValid = false
+                        
+                        break
+                    end
+                end
                 
-                table.insert(prefixIndexes, prefixIndex)
-                table.insert(foundKeys, { key, index })
+                if charactersValid then
+                    table.insert(prefixIndexes, prefixIndex)
+                    table.insert(foundKeys, { key, index })
+                end
 
                 break
-            end
-        end
-        
-        -- awful edge case when the prefix is the same as the suffix (eg. jf0esd9j, prefix and suffix is j)
-        -- it isnt a perfect fix but afaik there isnt a good method to do it
-        if not keyFound and prefixPassed and key:sub(keyLength - (#prefixPassed - 1), keyLength) == prefixPassed then
-            local constantCharacters = {}
-            local charactersValid = true
-            
-            for _, constant in next, constants do
-                for character in constant:gmatch("(%w)") do
-                    table.insert(constantCharacters, character)
-                end
-            end
-            
-            for character in key:gmatch("(%w)") do -- make sure every character in the key shows up
-                if not table.find(constantCharacters, character) then
-                    charactersValid = false
-                    
-                    break
-                end
-            end
-            
-            if charactersValid then
-                table.insert(prefixIndexes, prefixIndex)
-                table.insert(foundKeys, { key, index })
             end
         end
     end
