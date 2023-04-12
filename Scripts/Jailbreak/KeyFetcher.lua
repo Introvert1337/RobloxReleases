@@ -178,7 +178,7 @@ do -- arrest / pickpocket / breakout
     end
     
     keyFunctions.Breakout = function()
-        return characterInteractFunction
+        return getupvalue(characterInteractFunction, 4)
     end
 end
 
@@ -198,7 +198,7 @@ do -- eject / hijack / entercar
     end)
     
     keyFunctions.Hijack = function()
-        return getupvalue(seatInteractFunction, 1)
+        return seatInteractFunction
     end
 
     keyFunctions.Eject = function()
