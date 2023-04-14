@@ -157,6 +157,12 @@ do -- taze
         return require(gameFolder.Item.Taser).Tase
     end
 end
+    
+do -- droprope
+    keyFunctions.DropRope = function()
+        return getproto(require(gameFolder.Vehicle.Heli), 5)
+    end
+end
 
 do -- punch
     keyFunctions.Punch = function()
