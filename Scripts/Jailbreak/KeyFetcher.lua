@@ -235,11 +235,11 @@ do -- equipgun / unequipgun / buygun
         return getproto(require(gameFolder.GunShop.GunShopUI).displayList, 1)
     end)
 
-    keyFunctions.EquipGun = function()
+    keyFunctions.BuyGun = function()
         return displayGunList
     end
 
-    keyFunctions.BuyGun = function()
+    keyFunctions.EquipGun = function()
         return displayGunList, 2
     end
 
