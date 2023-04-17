@@ -15,6 +15,7 @@ local network = getupvalue(require(ReplicatedStorage.Module.AlexChassis).SetEven
 local keysList = getupvalue(getupvalue(network.FireServer, 1), 3)
 
 local gameFolder = ReplicatedStorage.Game
+local robloxEnvironment = getrenv()
 
 local teamChooseUI = require(gameFolder.TeamChooseUI) -- module used in multiple keys
 local defaultActions = require(gameFolder.DefaultActions) -- module used in multiple keys
@@ -22,6 +23,8 @@ local itemSystem = require(gameFolder.ItemSystem.ItemSystem) -- module used in m
 
 local networkKeys = {}
 local keyFunctions = {}
+local blacklistedConstants = {}
+local keyCache = {}
 
 local exceptionKeys = { -- keys to use alternative method (deemed to be more efficient for these cases)
     PlaySound = function(checkFunction)
@@ -32,23 +35,29 @@ local exceptionKeys = { -- keys to use alternative method (deemed to be more eff
     end
 }
 
+for index, value in next, getrenv() do -- soooo bad
+    if index ~= "_G" and index ~= "shared" and typeof(value) == "table" then
+        for name in next, value do
+            table.insert(blacklistedConstants, name)
+        end
+    end
+end
+
 --// Functions
 
-local function fetchKey(callerFunction, keyIndex)
+local function fetchKey(callerFunction)
     local constants = getconstants(callerFunction)
     
     local prefixIndexes = {}
     local foundKeys = {}
     local constantCharacters = {}
     
-    keyIndex = keyIndex or 1
-    
     for index, constant in next, constants do
         if keysList[constant] then -- if the constants already contain the raw key
             table.insert(foundKeys, { constant, 0 })
             
             constants[index] = nil
-        elseif typeof(constant) ~= "string" or constant == "" or constant:lower() ~= constant then
+        elseif typeof(constant) ~= "string" or constant == "" or constant:match("%u") or constant:match("%W") or table.find(blacklistedConstants, constant) then
             constants[index] = nil -- remove constants that are 100% not the ones we need to make it a bit faster
         else
             for character in constant:gmatch("(%w)") do
@@ -56,7 +65,6 @@ local function fetchKey(callerFunction, keyIndex)
             end
         end
     end
-
     
     for key, remote in next, keysList do
         local prefixPassed, prefixIndex = false
@@ -68,14 +76,17 @@ local function fetchKey(callerFunction, keyIndex)
             if not prefixPassed and key:sub(1, constantLength) == constant then -- check if the key starts with one of the constants
                 prefixPassed, prefixIndex = constant, index
             elseif prefixPassed and key:sub(keyLength - (constantLength - 1), keyLength) == constant then -- check if the key ends with one of the constants
+                local currentConstantCharacters = table.clone(constantCharacters)
                 local charactersValid = true
 
                 for character in key:gmatch("(%w)") do -- make sure every character in the key shows up
-                    if not table.find(constantCharacters, character) then
+                    if not table.find(currentConstantCharacters, character) then
                         charactersValid = false
                         
                         break
                     end
+                    
+                    table.remove(currentConstantCharacters, table.find(currentConstantCharacters, character))
                 end
                 
                 if charactersValid then
@@ -95,9 +106,7 @@ local function fetchKey(callerFunction, keyIndex)
         end
     end
 
-    local correctKey = foundKeys[keyIndex]
-
-    return correctKey and correctKey[1] or "Failed to fetch key"
+    return foundKeys
 end
 
 local function errorHandle(callback)
@@ -176,7 +185,7 @@ do -- arrest / pickpocket / breakout
     end)
 
     keyFunctions.Arrest = function()
-        return getupvalue(characterInteractFunction, 1)
+        return getupvalue(getupvalue(characterInteractFunction, 1), 7)
     end
 
     keyFunctions.Pickpocket = function()
@@ -204,7 +213,7 @@ do -- eject / hijack / entercar
     end)
     
     keyFunctions.Hijack = function()
-        return seatInteractFunction
+        return getupvalue(seatInteractFunction, 1)
     end
 
     keyFunctions.Eject = function()
@@ -230,6 +239,23 @@ do -- robstart / robend
     end
 end
 
+do -- opendoor
+    -- this may not work on all exploits, your exploit must support the gc argument for getproto
+    -- you can replace it with a gc search for a function with the constant "SequenceRequireState" if your exploit doesnt support this
+
+    keyFunctions.OpenDoor = function()
+        local doorAddedFunction = getconnections(CollectionService:GetInstanceAddedSignal("Door"))[1].Function
+
+        return getupvalue(getproto(getupvalue(doorAddedFunction, 2), 1, true)[1], 7)
+    end
+end
+
+do -- falldamage
+    keyFunctions.FallDamage = function()
+        return getupvalue(defaultActions.onJumpPressed._handlerListHead._next._fn, 4)
+    end
+end
+
 do -- equipgun / unequipgun / buygun
     local displayGunList = errorHandle(function()
         return getproto(require(gameFolder.GunShop.GunShopUI).displayList, 1)
@@ -245,23 +271,6 @@ do -- equipgun / unequipgun / buygun
 
     keyFunctions.UnequipGun = function()
         return displayGunList, 3
-    end
-end
-
-do -- opendoor
-    -- this may not work on all exploits, your exploit must support the gc argument for getproto
-    -- you can replace it with a gc search for a function with the constant "SequenceRequireState" if your exploit doesnt support this
-
-    keyFunctions.OpenDoor = function()
-        local doorAddedFunction = getconnections(CollectionService:GetInstanceAddedSignal("Door"))[1].Function
-
-        return getupvalue(getproto(getupvalue(doorAddedFunction, 2), 1, true)[1], 7)
-    end
-end
-
-do -- falldamage
-    keyFunctions.FallDamage = function()
-        return getupvalue(defaultActions.onJumpPressed._handlerListHead._next._fn, 4)
     end
 end
 
@@ -284,7 +293,7 @@ do -- exception keys
         local failedMessage = ("Failed to fetch key ( %s )"):format(errorMessage)
 
         for keyName in next, exceptionKeys do
-            networkKeys[keyName] = networkKeys[keyName] or failedMessage
+            networkKeys[keyName] = failedMessage
         end
     end
 end
@@ -293,7 +302,11 @@ end
 
 for keyName, keyFunction in next, keyFunctions do
     local success, errorMessage = pcall(function()
-        networkKeys[keyName] = fetchKey(keyFunction())
+        local callerFunction, keyIndex = keyFunction()
+        local keys = keyCache[callerFunction] or fetchKey(callerFunction)
+        
+        keyCache[callerFunction] = keys
+        networkKeys[keyName] = keys[keyIndex or 1][1] or "Failed to fetch key"
     end)
 
     if not success then
@@ -301,7 +314,7 @@ for keyName, keyFunction in next, keyFunctions do
     end
 end
 
---// Return variables 
+--// Return variables
 
 local environment = getgenv()
 
