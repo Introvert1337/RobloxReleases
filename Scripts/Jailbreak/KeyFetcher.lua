@@ -45,7 +45,15 @@ end
 
 --// Functions
 
-local function fetchKey(callerFunction)
+local function fetchKey(callerFunction, keyIndex)
+    keyIndex = keyIndex or 1
+    
+    if keyCache[callerFunction] then
+        local correctKey = keyCache[callerFunction][keyIndex]
+
+        return correctKey and correctKey[1] or "Failed to fetch key"
+    end
+    
     local constants = getconstants(callerFunction)
     
     local prefixIndexes = {}
@@ -105,8 +113,12 @@ local function fetchKey(callerFunction)
             table.remove(foundKeys, index)
         end
     end
+    
+    keyCache[callerFunction] = foundKeys
 
-    return foundKeys
+    local correctKey = foundKeys[keyIndex]
+
+    return correctKey and correctKey[1] or "Failed to fetch key"
 end
 
 local function errorHandle(callback)
@@ -302,11 +314,7 @@ end
 
 for keyName, keyFunction in next, keyFunctions do
     local success, errorMessage = pcall(function()
-        local callerFunction, keyIndex = keyFunction()
-        local keys = keyCache[callerFunction] or fetchKey(callerFunction)
-        
-        keyCache[callerFunction] = keys
-        networkKeys[keyName] = keys[keyIndex or 1][1] or "Failed to fetch key"
+        networkKeys[keyName] = fetchKey(keyFunction()) or "Failed to fetch key"
     end)
 
     if not success then
