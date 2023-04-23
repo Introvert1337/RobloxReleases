@@ -229,7 +229,7 @@ do -- eject / hijack / entercar
     end
 
     keyFunctions.Eject = function()
-        return getupvalue(seatInteractFunction, 2)
+        return seatInteractFunction
     end
 
     keyFunctions.EnterCar = function()
@@ -272,16 +272,16 @@ do -- equipgun / unequipgun / buygun
     local displayGunList = errorHandle(function()
         return getproto(require(gameFolder.GunShop.GunShopUI).displayList, 1)
     end)
-
-    keyFunctions.BuyGun = function()
+    
+    keyFunctions.EquipGun = function()
         return displayGunList
     end
-
-    keyFunctions.EquipGun = function()
+    
+    keyFunctions.UnequipGun = function()
         return displayGunList, 2
     end
 
-    keyFunctions.UnequipGun = function()
+    keyFunctions.BuyGun = function()
         return displayGunList, 3
     end
 end
