@@ -286,8 +286,18 @@ do -- equipgun / unequipgun / buygun
     end
 end
 
+do -- ragdoll
+    keyFunctions.Ragdoll = function()
+        return require(gameFolder.Falling).StartRagdolling
+    end
+end
+
 do -- exception keys
-    local exceptionKeysFound, exceptionKeyCount = 0, #exceptionKeys
+    local exceptionKeysFound, exceptionKeyCount = 0, 0
+    
+    for _ in next, exceptionKeys do
+        exceptionKeyCount += 1
+    end
     
     local success, errorMessage = pcall(function()
         for key, clientFunction in next, getupvalue(teamChooseUI.Init, 2) do 
