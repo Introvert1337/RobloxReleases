@@ -25,6 +25,9 @@ local networkKeys = {}
 local keyFunctions = {}
 local blacklistedConstants = {}
 local keyCache = {}
+local backupKeys = { -- could do getinfo numparams but this is faster
+    Arrest = true
+}
 
 local exceptionKeys = { -- keys to use alternative method (deemed to be more efficient for these cases)
     PlaySound = function(checkFunction)
@@ -196,8 +199,12 @@ do -- arrest / pickpocket / breakout
         return getupvalue(getupvalue(require(ReplicatedStorage.App.CharacterBinder)._classAddedSignal._handlerListHead._fn, 1), 2)
     end)
 
-    keyFunctions.Arrest = function()
-        return getupvalue(characterInteractFunction, 1)
+    keyFunctions.Arrest = function(backup)
+        if backup then
+            return getupvalue(getupvalue(characterInteractFunction, 1), 7)
+        else
+            return getupvalue(characterInteractFunction, 1)
+        end
     end
 
     keyFunctions.Pickpocket = function()
@@ -334,8 +341,16 @@ for keyName, keyFunction in next, keyFunctions do
         networkKeys[keyName] = fetchKey(keyFunction()) or "Failed to fetch key"
     end)
 
-    if not success then
-        networkKeys[keyName] = ("Failed to fetch key ( %s )"):format(errorMessage)
+    if not success or networkKeys[keyName] == "Failed to fetch key" then
+        if backupKeys[keyName] then
+            success, errorMessage = pcall(function()
+                networkKeys[keyName] = fetchKey(keyFunction(true)) or "Failed to fetch key"
+            end)
+        end
+
+        if not success then
+            networkKeys[keyName] = ("Failed to fetch key ( %s )"):format(errorMessage)
+        end
     end
 end
 
