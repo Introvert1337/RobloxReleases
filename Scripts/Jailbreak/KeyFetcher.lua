@@ -242,11 +242,11 @@ do -- robstart / robend
         return getupvalue(getconnections(CollectionService:GetInstanceAddedSignal("SmallStore"))[1].Function, 1)
     end)
 
-    keyFunctions.RobStart = function()
+    keyFunctions.RobEnd = function()
         return robFunction
     end
     
-    keyFunctions.RobEnd = function()
+    keyFunctions.RobStart = function()
         return robFunction, 2
     end
 end
