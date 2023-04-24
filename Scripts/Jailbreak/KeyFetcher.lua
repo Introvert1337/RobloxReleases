@@ -287,15 +287,22 @@ do -- equipgun / unequipgun / buygun
 end
 
 do -- exception keys
+    local exceptionKeysFound, exceptionKeyCount = 0, #exceptionKeys
+    
     local success, errorMessage = pcall(function()
         for key, clientFunction in next, getupvalue(teamChooseUI.Init, 2) do 
-            if typeof(clientFunction) == "function" then 
+            if typeof(clientFunction) == "function" then
                 for keyName, keyCheck in next, exceptionKeys do
                     if keyCheck(clientFunction) then
+                        exceptionKeysFound += 1
                         networkKeys[keyName] = key
 
                         break
                     end
+                end
+                
+                if exceptionKeysFound == exceptionKeyCount then
+                    break
                 end
             end
         end
