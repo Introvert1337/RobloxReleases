@@ -197,7 +197,7 @@ do -- arrest / pickpocket / breakout
     end)
 
     keyFunctions.Arrest = function()
-        return getupvalue(getupvalue(characterInteractFunction, 1), 7)
+        return getupvalue(characterInteractFunction, 1)
     end
 
     keyFunctions.Pickpocket = function()
@@ -273,11 +273,11 @@ do -- equipgun / unequipgun / buygun
         return getproto(require(gameFolder.GunShop.GunShopUI).displayList, 1)
     end)
     
-    keyFunctions.EquipGun = function()
+    keyFunctions.UnequipGun = function()
         return displayGunList
     end
     
-    keyFunctions.UnequipGun = function()
+    keyFunctions.EquipGun = function()
         return displayGunList, 2
     end
 
