@@ -1,27 +1,27 @@
 --// variables 
 
-local keys, network = loadstring(game:HttpGet("https://raw.githubusercontent.com/Introvert1337/RobloxReleases/main/Scripts/Jailbreak/KeyFetcher.lua"))();
+local keys, network = loadstring(game:HttpGet("https://raw.githubusercontent.com/Introvert1337/RobloxReleases/main/Scripts/Jailbreak/KeyFetcher.lua"))()
 
---// no fall damage / no ragdoll
+--// no ragdoll
 
-local player_utils = require(game:GetService("ReplicatedStorage").Game.PlayerUtils);
+local tagUtils = require(game:GetService("ReplicatedStorage").Tag.TagUtils)
 
-local old_is_point_in_tag = player_utils.isPointInTag;
-player_utils.isPointInTag = function(point, tag)
+local oldIsPointInTag
+tagUtils.isPointInTag = function(point, tag)
     if tag == "NoRagdoll" or tag == "NoFallDamage" then 
-        return true;
-    end;
+        return true
+    end
     
-    return old_is_point_in_tag(point, tag);
-end;
+    return oldIsPointInTag(point, tag)
+end
 
---// no damage 
+--// no damage (only applies to some things like tomb spikes)
 
-local old_fire_server = getupvalue(network.FireServer, 1);
+local oldFireServer = getupvalue(network.FireServer, 1)
 setupvalue(network.FireServer, 1, function(key, ...)
-    if key == keys.Damage then 
-        return;
-    end;
-    
-    return old_fire_server(key, ...);
-end);
+    if key == keys.Damage then
+        return
+    end
+
+    return oldFireServer(key, ...)
+end)
