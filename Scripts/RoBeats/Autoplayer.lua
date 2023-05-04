@@ -135,8 +135,6 @@ for index, instance in next, workspace:GetDescendants() do
                     end
                 end
             elseif instance.Transparency < 1 and instance.Height > 0.2 and math.floor(instance.CFrame.Y * 10) == Autoplayer.sliderY then
-                GrabKeys()
-
                 local noteLane, lanePosition = GetNearestLane(instance.CFrame.Position)
 
                 if noteLane then
