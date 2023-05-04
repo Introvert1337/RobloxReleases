@@ -32,7 +32,7 @@ for index, module in next, getloadedmodules() do
 						return warn("Successfully hooked note results!")
 					end
 				end
-			end
+	        end
 		end
-    end
+	end
 end
