@@ -1,4 +1,4 @@
-local VirtualInputManager = game:GetService("VirtualInputManager")
+local VirtualInputManager = Instance.new("VirtualInputManager") -- idk if they have a vim detection but just in case
 
 local rollFunction = getsenv(game:GetService("Players").LocalPlayer.Character.CharacterHandler.InputClient).Roll
 local remoteConstantIndex = table.find(getconstants(rollFunction), "Unblock")
