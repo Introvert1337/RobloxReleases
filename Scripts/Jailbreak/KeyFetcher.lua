@@ -48,7 +48,8 @@ end
 
 --// Functions
 
-local function fetchKey(callerFunction, keyIndex)
+
+local function fetchKey(callerFunction, keyIndex, multiSearch)
     keyIndex = keyIndex or 1
     
     if keyCache[callerFunction] then
@@ -58,6 +59,7 @@ local function fetchKey(callerFunction, keyIndex)
     end
     
     local constants = getconstants(callerFunction)
+	local originalConstants = table.clone(constants)
     
     local prefixIndexes = {}
     local foundKeys = {}
@@ -119,6 +121,10 @@ local function fetchKey(callerFunction, keyIndex)
     
     keyCache[callerFunction] = foundKeys
 
+	if multiSearch then
+		return foundKeys, originalConstants, constants, prefixIndexes
+	end
+
     local correctKey = foundKeys[keyIndex]
 
     return correctKey and correctKey[1] or "Failed to fetch key"
@@ -132,6 +138,22 @@ local function errorHandle(callback)
     end
 
     return returnValue
+end
+
+local function errorHandleMultiSearch(callerFunction, keyNames)
+    local success, foundKeys, orginalConstants, modifiedConstants, prefixIndexes = pcall(function()
+        return fetchKey(callerFunction, nil, true)
+    end)
+
+    if not success then
+        for _, keyName in keyNames do
+            networkKeys[keyName] = ("Failed to fetch key ( %s )"):format(foundKeys)
+        end
+
+        return false
+    end
+
+    return foundKeys, orginalConstants, modifiedConstants, prefixIndexes
 end
 
 --// Fetch functions for keys
@@ -249,12 +271,16 @@ do -- robstart / robend
         return getupvalue(getconnections(CollectionService:GetInstanceAddedSignal("SmallStore"))[1].Function, 1)
     end)
 
-    keyFunctions.RobEnd = function()
-        return robFunction
-    end
+    local foundKeys, orginalConstants, modifiedConstants, prefixIndexes = errorHandleMultiSearch(robFunction, { "RobEnd", "RobStart" })
+
+    if foundKeys then
+        for index = 1, 2 do
+            local key = foundKeys[index] and (foundKeys[index][1] or "Failed to fetch key") or "Failed to fetch key"
+            local originalPrefixIndex = table.find(orginalConstants, modifiedConstants[prefixIndexes[index]])
+            local previousConstant = originalPrefixIndex and orginalConstants[originalPrefixIndex - 1]
     
-    keyFunctions.RobStart = function()
-        return robFunction, 2
+            networkKeys[previousConstant == "FireServer" and "RobEnd" or "RobStart"] = key
+        end
     end
 end
 
@@ -280,16 +306,22 @@ do -- equipgun / unequipgun / buygun
         return getproto(require(gameFolder.GunShop.GunShopUI).displayList, 1)
     end)
     
-    keyFunctions.UnequipGun = function()
-        return displayGunList
-    end
-    
-    keyFunctions.EquipGun = function()
-        return displayGunList, 2
-    end
+    local foundKeys, orginalConstants, modifiedConstants, prefixIndexes = errorHandleMultiSearch(displayGunList, { "UneqipGun", "EquipGun", "BuyGun" })
 
-    keyFunctions.BuyGun = function()
-        return displayGunList, 3
+    if foundKeys then
+        for index = 1, 3 do
+            local key = foundKeys[index] and (foundKeys[index][1] or "Failed to fetch key") or "Failed to fetch key"
+            local originalPrefixIndex = table.find(orginalConstants, modifiedConstants[prefixIndexes[index]])
+            local previousConstant = originalPrefixIndex and orginalConstants[originalPrefixIndex - 1]
+    
+            if previousConstant == "GetEquipped" then
+                networkKeys.UnequipGun = key
+            elseif previousConstant == "doesPlayerOwn" then
+                networkKeys.EquipGun = key
+            else
+                networkKeys.BuyGun = key
+            end
+        end
     end
 end
 
