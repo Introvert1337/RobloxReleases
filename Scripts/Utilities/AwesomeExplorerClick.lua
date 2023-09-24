@@ -326,7 +326,7 @@ local EmbeddedModules = {
                     selection:SetTable({ raycastNode })
                     Explorer.ViewNode(raycastNode)
                 end
-            elseif input.KeyCode == Enum.KeyCode.LeftAlt then
+            elseif input.KeyCode == Enum.KeyCode.LeftControl then
                 clickToSelect = not clickToSelect
             end
         end)
