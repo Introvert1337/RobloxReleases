@@ -72,7 +72,7 @@ local function fetchKey(callerFunction, keyIndex, multiSearch)
             table.insert(foundKeys, { constant, 0 })
             
             constants[index] = nil
-        elseif typeof(constant) ~= "string" or constant == "" or constant:match("%u") or constant:match("%W") or table.find(blacklistedConstants, constant) then
+        elseif typeof(constant) ~= "string" or constant == "" or constant:match("[%u%W]") or table.find(blacklistedConstants, constant) then
             constants[index] = nil -- remove constants that are 100% not the ones we need to make it a bit faster
         else
             for character in constant:gmatch("(%w)") do
