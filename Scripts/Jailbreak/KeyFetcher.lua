@@ -26,7 +26,9 @@ local keyFunctions = {}
 local blacklistedConstants = {}
 local keyCache = {}
 local backupKeys = { -- could do getinfo numparams but this is faster
-    Arrest = true
+    Arrest = true,
+    Breakout = true,
+    Eject = true
 }
 
 local exceptionKeys = { -- keys to use alternative method (deemed to be more efficient for these cases)
@@ -188,7 +190,7 @@ end
 
 do -- jointeam
     keyFunctions.SwitchTeam = function()
-        return getproto(getproto(getproto(require(gameFolder.SidebarUI).Init, 2), 1), 1)
+        return getproto(getproto(getproto(require(gameFolder.SidebarUI).Init, 3), 1), 1)
     end
 end
 
@@ -233,8 +235,12 @@ do -- arrest / pickpocket / breakout
         return getupvalue(characterInteractFunction, 3)
     end
     
-    keyFunctions.Breakout = function()
-        return getupvalue(characterInteractFunction, 4)
+    keyFunctions.Breakout = function(backup)
+        if backup then
+            return characterInteractFunction
+        else
+            return getupvalue(characterInteractFunction, 4)
+        end
     end
 end
 
@@ -257,8 +263,12 @@ do -- eject / hijack / entercar
         return getupvalue(seatInteractFunction, 1)
     end
 
-    keyFunctions.Eject = function()
-        return seatInteractFunction
+    keyFunctions.Eject = function(backup)
+        if backup then
+            return getupvalue(seatInteractFunction, 2)
+        else
+            return seatInteractFunction
+        end
     end
 
     keyFunctions.EnterCar = function()
