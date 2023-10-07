@@ -61,7 +61,7 @@ local function fetchKey(callerFunction, keyIndex, multiSearch)
     end
     
     local constants = getconstants(callerFunction)
-	local originalConstants = table.clone(constants)
+    local originalConstants = table.clone(constants)
     
     local prefixIndexes = {}
     local foundKeys = {}
@@ -123,9 +123,9 @@ local function fetchKey(callerFunction, keyIndex, multiSearch)
     
     keyCache[callerFunction] = foundKeys
 
-	if multiSearch then
-		return foundKeys, originalConstants, constants, prefixIndexes
-	end
+    if multiSearch then
+        return foundKeys, originalConstants, constants, prefixIndexes
+    end
 
     local correctKey = foundKeys[keyIndex]
 
