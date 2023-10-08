@@ -46,6 +46,8 @@ for index, value in getrenv() do -- soooo bad
             table.insert(blacklistedConstants, name)
         end
     end
+
+    table.insert(blacklistedConstants, index)
 end
 
 --// Functions
@@ -285,7 +287,7 @@ do -- robstart / robend
 
     if foundKeys then
         for index = 1, 2 do
-            local key = foundKeys[index] and (foundKeys[index][1] or "Failed to fetch key") or "Failed to fetch key"
+            local key = foundKeys[index] and foundKeys[index][1] or "Failed to fetch key"
             local originalPrefixIndex = table.find(orginalConstants, modifiedConstants[prefixIndexes[index]])
             local previousConstant = originalPrefixIndex and orginalConstants[originalPrefixIndex - 1]
     
@@ -320,7 +322,7 @@ do -- equipgun / unequipgun / buygun
 
     if foundKeys then
         for index = 1, 3 do
-            local key = foundKeys[index] and (foundKeys[index][1] or "Failed to fetch key") or "Failed to fetch key"
+            local key = foundKeys[index] and foundKeys[index][1] or "Failed to fetch key"
             local originalPrefixIndex = table.find(orginalConstants, modifiedConstants[prefixIndexes[index]])
             local previousConstant = originalPrefixIndex and orginalConstants[originalPrefixIndex - 1]
     
