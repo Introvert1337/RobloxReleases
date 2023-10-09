@@ -4,14 +4,32 @@ if networkKeys and network then
     return networkKeys, network
 end
 
---// Variables 
+--// Wait for game load
 
-local startTime = tick()
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = game:GetService("Players").LocalPlayer
+
+if not player.Character then
+    player.CharacterAdded:Wait()
+end
+
+local setEvent = require(ReplicatedStorage:WaitForChild("Module").AlexChassis).SetEvent
+local network = getupvalue(setEvent, 1)
+
+while not network and task.wait() do
+    network = getupvalue(setEvent, 1)
+end
+
+--// Variables
+
+local startTime = os.clock()
+
 local CollectionService = game:GetService("CollectionService")
 
-local network = getupvalue(require(ReplicatedStorage.Module.AlexChassis).SetEvent, 1)
 local keysList = getupvalue(getupvalue(network.FireServer, 1), 3)
 
 local gameFolder = ReplicatedStorage.Game
@@ -51,7 +69,6 @@ for index, value in getrenv() do -- soooo bad
 end
 
 --// Functions
-
 
 local function fetchKey(callerFunction, keyIndex, multiSearch)
     keyIndex = keyIndex or 1
@@ -406,13 +423,13 @@ environment.networkKeys, environment.network = networkKeys, network
 
 if debugOutput or debugOutput == nil then -- defaults to true unless explicitly set to false
     rconsolename("Jailbreak Key Fetcher - Made by Introvert")
-    rconsolewarn(("Key Fetcher Loaded in %s Seconds\n"):format(tick() - startTime))
+    rconsolewarn(("Key Fetcher Loaded in %s Seconds\n"):format(os.clock() - startTime))
     
     for index, key in networkKeys do
         rconsoleprint(("%s : %s\n"):format(index, key))
     end
 else
-    warn(("Key Fetcher Loaded in %s Seconds"):format(tick() - startTime))
+    warn(("Key Fetcher Loaded in %s Seconds"):format(os.clock() - startTime))
 end
 
 return networkKeys, network
