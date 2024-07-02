@@ -1,9 +1,5 @@
 --// Check if already in env
 
-if networkKeys and network then 
-    return networkKeys, network
-end
-
 --// Wait for game load
 
 if not game:IsLoaded() then
@@ -35,7 +31,7 @@ local keysList = getupvalue(getupvalue(network.FireServer, 1), 3)
 local gameFolder = ReplicatedStorage.Game
 local robloxEnvironment = getrenv()
 
-local teamChooseUI = require(gameFolder.TeamChooseUI) -- module used in multiple keys
+local teamChooseUI = require(ReplicatedStorage.TeamSelect.TeamChooseUI) -- module used in multiple keys
 local defaultActions = require(gameFolder.DefaultActions) -- module used in multiple keys
 local itemSystem = require(gameFolder.ItemSystem.ItemSystem) -- module used in multiple keys
 
@@ -203,7 +199,7 @@ end
 
 do -- switchteam (needs to be called before jointeam)
     keyFunctions.JoinTeam = function()
-        return getproto(teamChooseUI.Show, 4)
+        return getproto(teamChooseUI.Show, 3)
     end
 end
 
@@ -326,7 +322,7 @@ end
 
 do -- falldamage
     keyFunctions.FallDamage = function()
-        return getupvalue(defaultActions.onJumpPressed._handlerListHead._next._fn, 4)
+        return getupvalue(defaultActions.onJumpPressed._handlerListHead._next._fn, 2)
     end
 end
 
