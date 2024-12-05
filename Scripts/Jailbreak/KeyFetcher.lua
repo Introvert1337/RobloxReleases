@@ -1,5 +1,9 @@
 --// Check if already in env
 
+if networkKeys and network then 
+    return networkKeys, network
+end
+
 --// Wait for game load
 
 if not game:IsLoaded() then
