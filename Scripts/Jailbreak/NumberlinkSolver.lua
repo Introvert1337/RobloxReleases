@@ -20,45 +20,39 @@ local function traverseMatrix(startingNode, direction) -- function to get the in
     end
 end
 
-local function getPossiblePaths(node, target, path, correctPaths) -- function to get all possible paths from starting point to end
-    correctPaths = correctPaths or {}
+function getPossiblePaths(node, target, visited, path, correctPaths)
+    visited[node] = true -- Mark the current node as visited and add it to the path
+    table.insert(path, node)
 
-    if path then
-        if matrixList[node] == target then -- we have reached end point, this is a valid path
-            return table.insert(correctPaths, path.nodes)
-        end
-
-        path.visited[node] = true
-        table.insert(path.nodes, node)
+    if matrixList[node] == target and #path > 1 then -- Check if the current node meets the target condition
+        table.insert(correctPaths, table.clone(path))
     else
-        path = { nodes = {}, visited = { [node] = true } }
+        local possibleDirections = { -- Determine possible directions to traverse
+            l = node % rows ~= 1,
+            r = node % rows ~= 0,
+            u = node > rows,
+            d = node <= rows * (columns - 1)
+        }
+
+        for direction, allowed in possibleDirections do -- Iterate through each possible direction
+            if allowed then
+                local nextNode = traverseMatrix(node, direction)
+
+                if not visited[nextNode] and (matrixList[nextNode] == 0 or matrixList[nextNode] == target) then -- Continue DFS if the next node is valid
+                    getPossiblePaths(nextNode, target, visited, path, correctPaths)
+                end
+            end
+        end
     end
 
-    local possibleDirections = {
-        l = node % rows ~= 1, -- check if node is not on the left edge (one greater than a multiple of the rows)
-        r = node % rows ~= 0, -- check if node is not on the right edge (multiple of the rows)
-        u = node > rows, -- check if node is not on the top row (greater than the rows)
-        d = node < rows * (columns - 1) + 1 -- check if node is not on the bottom row (less than lowest index of bottom row)
-    }
+    -- Backtrack: unmark the node and remove it from the current path
+    visited[node] = nil
+    table.remove(path)
 
-    for direction, allowed in possibleDirections do
-        if not allowed then
-            continue
-        end
-        
-        local nextNode = traverseMatrix(node, direction)
-
-        if path.visited[nextNode] or (matrixList[nextNode] ~= 0 and matrixList[nextNode] ~= target) then -- if node has already been visited or it is occupied
-            continue
-        end
-
-        getPossiblePaths(nextNode, target, {
-            nodes = table.clone(path.nodes),
-            visited = table.clone(path.visited)
-        }, correctPaths)
+    -- Return the collection of correct paths when the initial call completes
+    if not path[1] then
+        return correctPaths
     end
-
-    return correctPaths
 end
 
 local function hasOverlap(setA, setB) -- check if 2 sets have any overlapping values
@@ -130,8 +124,10 @@ return function(matrix)
 
     for nodeValue, nodeIndex in uniqueNodeValues do -- create groups with the original and set version of the path
         pathGroups[nodeValue] = {}
+
+        local visited, path, correctPaths = {}, {}, {}
     
-        for pathIndex, path in getPossiblePaths(nodeIndex, nodeValue) do
+        for pathIndex, path in getPossiblePaths(nodeIndex, nodeValue, visited, path, correctPaths) do
             local set = {}
     
             for _, node in path do
