@@ -87,7 +87,7 @@ for _, value in getgc(true) do
                                 local upvalues = getupvalues(value)
 
                                 if #upvalues == 2 and typeof(upvalues[1]) == "table" then
-                                    task.spawn(playSession, value, firstUpvalue:get_song_key())
+                                    task.defer(playSession, value, firstUpvalue:get_song_key())
 
                                     break
                                 end
