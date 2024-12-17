@@ -1,6 +1,6 @@
 --[[
   Created April 2022
-  Originally created as a Lua version of VIPER's C++ external RoBeats autoplayer
+  Originally created as a reference for VIPER to create our C++ external Autoplayer from
   Only uses instances to autoplay
 ]]
 
