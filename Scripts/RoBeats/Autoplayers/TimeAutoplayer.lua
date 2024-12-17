@@ -44,8 +44,8 @@ local function playSession(getTime, songKey)
             return autoplayerConnection:Disconnect()
         end
 
-        local fpsOffset = 3000 - 1400 * deltaTime
-        local randomOffset = random:NextNumber(fpsOffset - 15, fpsOffset)
+        local fpsOffset = 3000 - 1800 * deltaTime
+        local randomOffset = random:NextNumber(fpsOffset - 10, fpsOffset)
 
         currentTime = getTime()
 
