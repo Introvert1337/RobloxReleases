@@ -26,16 +26,11 @@ local function playSession(getTime, songKey)
         keys[index + 1] = keyString
     end
 
-    local clonedHitObjects = {}
-
     while #songData.HitObjects == 0 do
         task.wait(0.1)
     end
 
-    for index, hitObject in songData.HitObjects do
-        clonedHitObjects[index] = table.clone(hitObject)
-    end
-
+    local clonedHitObjects = table.clone(songData.HitObjects)
     local currentTime = 0
 
     local autoplayerConnection
