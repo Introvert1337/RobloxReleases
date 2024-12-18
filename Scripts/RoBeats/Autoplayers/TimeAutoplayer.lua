@@ -14,23 +14,22 @@ local function playSession(getTime, songKey)
     setthreadidentity(8)
 
     local songData = songList:get(songKey)
-    local keys = {}
+    local keys = getupvalue(gameInput.get_key_display_str, 1)._table
 
-    for index = 0, 3 do
-        local keyString = gameInput:get_key_display_str(index)
-
-        if keyString:find("/") then
-            keyString = keyString:match("(%a+)/")
-        end
-
-        keys[index + 1] = keyString
+    if not keys[0] then
+        keys = { [0] = "A", [1] = "S", [2] = "D", [3] = "F" }
     end
 
     while #songData.HitObjects == 0 do
         task.wait(0.1)
     end
 
-    local clonedHitObjects = table.clone(songData.HitObjects)
+    local clonedHitObjects = {}
+
+    for index, hitObject in songData.HitObjects do
+        clonedHitObjects[index] = table.clone(hitObject)
+    end
+
     local currentTime = 0
 
     local autoplayerConnection
@@ -49,14 +48,14 @@ local function playSession(getTime, songKey)
                 if not note.Pressed then
                     note.Pressed = true
 
-                    VirtualInputManager:SendKeyEvent(true, keys[note.Track], false, game)
+                    VirtualInputManager:SendKeyEvent(true, keys[note.Track - 1], false, game)
                 end
 
                 if not note.Duration or currentTime - randomOffset >= note.Time + note.Duration then
                     table.remove(clonedHitObjects, index)
 
                     task.delay(random:NextNumber(0.02, 0.05), function()
-                        VirtualInputManager:SendKeyEvent(false, keys[note.Track], false, game)
+                        VirtualInputManager:SendKeyEvent(false, keys[note.Track - 1], false, game)
                     end)
                 end
             end
