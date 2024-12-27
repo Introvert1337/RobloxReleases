@@ -1,10 +1,10 @@
 -- this will make great hits perfect and okay hits great
 
-for index, module in next, getloadedmodules() do
+for _, module in getloadedmodules() do
     local moduleValue = require(module)
 
     if typeof(moduleValue) == "table" and rawget(moduleValue, "lookat_matrix") then
-        for functionName, functionValue in next, moduleValue do
+        for functionName, functionValue in moduleValue do
             if typeof(functionValue) == "function" then
                 local constants, upvalues = getconstants(functionValue), getupvalues(functionValue)
 
