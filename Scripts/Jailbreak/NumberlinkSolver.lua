@@ -38,14 +38,14 @@ function getPossiblePaths(node, target, visited, path, correctPaths)
             if allowed then
                 local nextNode = traverseMatrix(node, direction)
 
-                if not visited[nextNode] and (matrixList[nextNode] == 0 or matrixList[nextNode] == target) then -- Continue DFS if the next node is valid
+                if not visited[nextNode] and (matrixList[nextNode] == 0 or matrixList[nextNode] == target) then -- Continue if the next node is valid
                     getPossiblePaths(nextNode, target, visited, path, correctPaths)
                 end
             end
         end
     end
 
-    -- Backtrack: unmark the node and remove it from the current path
+    -- Unmark the node and remove it from the current path
     visited[node] = nil
     table.remove(path)
 
@@ -65,15 +65,9 @@ local function hasOverlap(setA, setB) -- check if 2 sets have any overlapping va
     return false
 end
 
-local function unionInto(setA, setB) -- adds all values of setB to setA
+local function removeOrUnion(setA, setB, union) -- adds/removes all values of setB to/from setA
     for value in setB do
-        setA[value] = true
-    end
-end
-
-local function removeFrom(setA, setB) -- removes all values of setB from setA
-    for value in setB do
-        setA[value] = nil
+        setA[value] = union
     end
 end
 
@@ -84,14 +78,14 @@ local function selectNonOverlapping(groupIndex) -- select one path from each gro
     
     for candidateIndex, candidate in pathGroups[groupIndex] do
         if not hasOverlap(usedPaths, candidate.set) then
-            unionInto(usedPaths, candidate.set)
+            removeOrUnion(usedPaths, candidate.set, true)
             chosenPaths[groupIndex] = candidate
             
             if selectNonOverlapping(groupIndex + 1) then
                 return true
             end
 
-            removeFrom(usedPaths, candidate.set)
+            removeOrUnion(usedPaths, candidate.set)
             chosenPaths[groupIndex] = nil
         end
     end
