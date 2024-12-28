@@ -251,15 +251,11 @@ do -- arrest / pickpocket / breakout
     end
 
     keyFunctions.Pickpocket = function()
-        return getupvalue(characterInteractFunction, 3)
+        return getupvalue(characterInteractFunction, 4)
     end
     
     keyFunctions.Breakout = function(backup)
-        if backup then
-            return characterInteractFunction
-        else
-            return getupvalue(characterInteractFunction, 4)
-        end
+        return characterInteractFunction
     end
 end
 
